@@ -1,17 +1,13 @@
-"""
-Nexuss Transformer Framework - Reward Modeling & RLHF
-Implements PPO, DPO, and Reward Modeling using TRL
-"""
+"""Reward modeling and RLHF package."""
 
-from .reward_model import RewardTrainer, RewardConfig
-from .ppo_trainer import PPOTrainerConfig, PPOTrainer
-from .dpo_trainer import DPOTrainerConfig, DPOTrainer
+from reward.reward_model import RewardConfig, RewardDataset, RewardTrainer, create_reward_model
+from reward.dpo_trainer import DPOTrainerConfig, train_dpo
 
 __all__ = [
-    "RewardTrainer",
     "RewardConfig",
-    "PPOTrainerConfig",
-    "PPOTrainer",
+    "RewardDataset",
+    "RewardTrainer",
+    "create_reward_model",
     "DPOTrainerConfig",
-    "DPOTrainer",
+    "train_dpo",
 ]

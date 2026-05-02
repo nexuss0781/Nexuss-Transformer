@@ -95,8 +95,9 @@ def apply_rotary_pos_emb(
     Returns:
         Rotated query and key tensors
     """
-    cos = cos.unsqueeze(unsqueeze_dim)
-    sin = sin.unsqueeze(unsqueeze_dim)
+    # cos/sin are (seq_len, head_dim), need to broadcast to (batch, heads, seq_len, head_dim)
+    cos = cos.unsqueeze(0).unsqueeze(0)  # (1, 1, seq_len, head_dim)
+    sin = sin.unsqueeze(0).unsqueeze(0)  # (1, 1, seq_len, head_dim)
     q_embed = (q * cos) + (rotate_half(q) * sin)
     k_embed = (k * cos) + (rotate_half(k) * sin)
     return q_embed, k_embed

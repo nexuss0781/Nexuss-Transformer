@@ -1,0 +1,245 @@
+{
+  "summary": {
+    "total_tests": 22,
+    "passed": 16,
+    "failed": 6,
+    "pass_rate": "72.73%",
+    "start_time": "2026-05-02T12:41:11.704872",
+    "end_time": "2026-05-02T12:41:16.144353",
+    "device": "cpu"
+  },
+  "model_config": {
+    "vocab_size": 1000,
+    "d_model": 128,
+    "n_heads": 4,
+    "n_layers": 4,
+    "max_seq_len": 256,
+    "d_ff": 512,
+    "activation": "swiglu",
+    "dropout": 0.1,
+    "attention_dropout": 0.0,
+    "hidden_dropout": 0.0,
+    "layer_norm_eps": 1e-05,
+    "tie_word_embeddings": true,
+    "use_rope": true,
+    "rope_theta": 10000.0,
+    "sliding_window": null,
+    "bias": false,
+    "initializer_range": 0.02,
+    "pad_token_id": null,
+    "bos_token_id": null,
+    "eos_token_id": null,
+    "use_cache": true,
+    "gradient_checkpointing": false
+  },
+  "detailed_results": [
+    {
+      "component": "Model Architecture",
+      "test_name": "Token Embeddings",
+      "passed": true,
+      "details": "Embedding shape: torch.Size([2, 32, 128]), dtype: torch.float32",
+      "metrics": {
+        "embedding_params": 128000
+      },
+      "timestamp": "2026-05-02T12:41:11.804640"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "Rotary Embeddings (RoPE)",
+      "passed": true,
+      "details": "RoPE cache shape: cos=torch.Size([32, 32]), sin=torch.Size([32, 32])",
+      "metrics": {
+        "max_seq_len": 256,
+        "head_dim": 32
+      },
+      "timestamp": "2026-05-02T12:41:11.806791"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "RMS Normalization",
+      "passed": true,
+      "details": "RMSNorm output shape: torch.Size([2, 32, 128]), mean variance: 1.0000",
+      "metrics": {
+        "params": 128
+      },
+      "timestamp": "2026-05-02T12:41:11.824947"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "SwiGLU Feed-Forward",
+      "passed": true,
+      "details": "FFN output shape: torch.Size([2, 32, 128])",
+      "metrics": {
+        "ffn_params": 196608
+      },
+      "timestamp": "2026-05-02T12:41:11.845567"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "Multi-Head Attention",
+      "passed": true,
+      "details": "Attention output shape: torch.Size([2, 32, 128]), KV cache: torch.Size([2, 4, 32, 32])",
+      "metrics": {
+        "attn_params": 65536
+      },
+      "timestamp": "2026-05-02T12:41:11.866148"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "Transformer Block",
+      "passed": true,
+      "details": "Block output shape: torch.Size([2, 32, 128])",
+      "metrics": {
+        "block_params": 262400
+      },
+      "timestamp": "2026-05-02T12:41:11.924721"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "Full Model Forward Pass",
+      "passed": true,
+      "details": "Logits shape: torch.Size([2, 32, 1000])",
+      "metrics": {
+        "total_params": 1177728
+      },
+      "timestamp": "2026-05-02T12:41:12.046024"
+    },
+    {
+      "component": "Model Architecture",
+      "test_name": "Autoregressive Generation",
+      "passed": false,
+      "details": "Failed: The size of tensor a (21) must match the size of tensor b (11) at non-singleton dimension 3",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:12.308200"
+    },
+    {
+      "component": "Training System",
+      "test_name": "Data Collator",
+      "passed": true,
+      "details": "Batch shape: torch.Size([3, 30])",
+      "metrics": {
+        "batch_size": 3
+      },
+      "timestamp": "2026-05-02T12:41:12.309822"
+    },
+    {
+      "component": "Training System",
+      "test_name": "Training Dataset",
+      "passed": true,
+      "details": "Dataset size: 30, columns: ['input_ids']",
+      "metrics": {
+        "num_samples": 30
+      },
+      "timestamp": "2026-05-02T12:41:15.297043"
+    },
+    {
+      "component": "Training System",
+      "test_name": "Checkpoint Manager",
+      "passed": true,
+      "details": "Checkpoint saved and loaded: /tmp/tmpws1fvp0l/checkpoints/checkpoints/checkpoint-000010_20260502_124115",
+      "metrics": {
+        "checkpoint_size_mb": 4.723737
+      },
+      "timestamp": "2026-05-02T12:41:15.432444"
+    },
+    {
+      "component": "Training System",
+      "test_name": "Trainer Initialization",
+      "passed": false,
+      "details": "Failed: Accelerator.__init__() got an unexpected keyword argument 'ddp_find_unused_parameters'",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:15.508395"
+    },
+    {
+      "component": "Fine-tuning",
+      "test_name": "Full Fine-tuning",
+      "passed": false,
+      "details": "Failed: Accelerator.__init__() got an unexpected keyword argument 'ddp_find_unused_parameters'",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:15.584626"
+    },
+    {
+      "component": "Fine-tuning",
+      "test_name": "Layer Freezing Strategies",
+      "passed": true,
+      "details": "Tested top-k, bottom-k, and freeze-except strategies. Trainable params: 9",
+      "metrics": {
+        "trainable_after_freeze": 9
+      },
+      "timestamp": "2026-05-02T12:41:15.647467"
+    },
+    {
+      "component": "Fine-tuning",
+      "test_name": "LoRA PEFT",
+      "passed": false,
+      "details": "Failed: LoraConfig.__init__() got an unexpected keyword argument 'layer_pattern'",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:15.709079"
+    },
+    {
+      "component": "Reward Modeling & RLHF",
+      "test_name": "Reward Model Config",
+      "passed": true,
+      "details": "Reward model configuration validated",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:15.709344"
+    },
+    {
+      "component": "Reward Modeling & RLHF",
+      "test_name": "DPO Configuration",
+      "passed": true,
+      "details": "DPO configuration validated",
+      "metrics": {
+        "beta": 0.1,
+        "loss_type": "sigmoid"
+      },
+      "timestamp": "2026-05-02T12:41:15.709359"
+    },
+    {
+      "component": "Continual Learning",
+      "test_name": "Elastic Weight Consolidation",
+      "passed": false,
+      "details": "Failed: 'MiniDataLoader' object has no attribute 'device'",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:15.806371"
+    },
+    {
+      "component": "Continual Learning",
+      "test_name": "Experience Replay Buffer",
+      "passed": true,
+      "details": "Replay buffer: 100/100 samples",
+      "metrics": {
+        "buffer_size": 100
+      },
+      "timestamp": "2026-05-02T12:41:15.807091"
+    },
+    {
+      "component": "Metrics & Utilities",
+      "test_name": "Perplexity Computation",
+      "passed": true,
+      "details": "Perplexity: 1017.2601",
+      "metrics": {
+        "perplexity": 1017.2600911296075
+      },
+      "timestamp": "2026-05-02T12:41:15.907708"
+    },
+    {
+      "component": "Metrics & Utilities",
+      "test_name": "Accuracy Computation",
+      "passed": true,
+      "details": "Accuracy: 0.0000",
+      "metrics": {
+        "accuracy": 0.0
+      },
+      "timestamp": "2026-05-02T12:41:16.025627"
+    },
+    {
+      "component": "Metrics & Utilities",
+      "test_name": "Model Versioning",
+      "passed": false,
+      "details": "Failed: 'NexussTransformer' object has no attribute 'save_pretrained'",
+      "metrics": {},
+      "timestamp": "2026-05-02T12:41:16.143991"
+    }
+  ]
+}
