@@ -6,7 +6,12 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)\n[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch)](https://pytorch.org/)\n[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/)\n[![EthioBBPE](https://img.shields.io/badge/🇪🇹-EthioBBPE-9370db?logo=python)](https://github.com/nexuss0781/Ethio_BBPE)\n\n[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch)](https://pytorch.org/)
+[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/)
+[![EthioBBPE](https://img.shields.io/badge/🇪🇹-EthioBBPE-9370db?logo=python)](https://github.com/nexuss0781/Ethio_BBPE)
+
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization)
 
 </div>
 
