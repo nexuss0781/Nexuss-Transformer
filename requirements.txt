@@ -8,6 +8,7 @@ peft>=0.8.0
 trl>=0.7.0
 
 # Tokenization
+ethiobbpe>=1.0.0       # EthioBBPE - Advanced Ethiopian Language Tokenizer
 tokenizers>=0.15.0
 sentencepiece>=0.1.99
 

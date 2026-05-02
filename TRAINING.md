@@ -26,12 +26,40 @@ Ensure you have Python 3.9+ installed.
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install dependencies (includes EthioBBPE tokenizer)
 pip install -r requirements.txt
 
 # Optional: Install Flash Attention for speedup (requires CUDA)
 # pip install flash-attn --no-build-isolation
 ```
+
+### 🇪🇹 EthioBBPE Tokenizer
+The framework uses **EthioBBPE**, a production-ready Byte Pair Encoding tokenizer optimized for Ethiopian languages (Amharic, Tigrinya, Ge'ez). It is automatically installed via `requirements.txt`.
+
+```python
+from ethiobbpe import EthioBBPE
+
+# Load pre-trained tokenizer
+tokenizer = EthioBBPE()
+
+# Encode text
+encoded = tokenizer.encode("Hello world")
+print(encoded["ids"])  # [902, 315, 83, 2517]
+
+# Decode tokens
+decoded = tokenizer.decode([902, 315, 83, 2517])
+print(decoded)  # "Hello world"
+
+# Get vocabulary info
+vocab_size = tokenizer.get_vocab_size()  # 16000
+model_name = tokenizer.model_name  # "EthioBBPE_AmharicBible"
+```
+
+**Features:**
+- Optimized for Amharic, Tigrinya, and Ge'ez scripts
+- Compression support (gzip) for efficient storage
+- Quantization options for reduced memory footprint
+- Automatic model downloading from HuggingFace Hub
 
 ---
 

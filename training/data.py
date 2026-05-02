@@ -3,9 +3,10 @@ Data collation for language modeling.
 
 Provides efficient batch collation with padding and label handling
 for autoregressive language model training.
+Integrated with EthioBBPE tokenizer for Ethiopian languages.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 import torch
 from torch.nn.utils.rnn import pad_sequence
 
@@ -19,6 +20,7 @@ class DataCollatorForLanguageModeling:
     - Label creation for next-token prediction
     - Optional masking for MLM (not used in decoder-only)
     - Efficient tensor conversion
+    - Compatible with EthioBBPE and HuggingFace tokenizers
     
     Args:
         pad_token_id: Token ID for padding
@@ -97,9 +99,11 @@ def create_training_dataset(
     """
     Create a dataset from raw texts.
     
+    Supports both EthioBBPE and HuggingFace tokenizers.
+    
     Args:
         texts: List of text strings
-        tokenizer: Tokenizer instance
+        tokenizer: Tokenizer instance (EthioBBPE or HF tokenizer)
         max_length: Maximum sequence length
         stride: Stride for chunking long texts (None for truncation)
     
@@ -108,15 +112,25 @@ def create_training_dataset(
     """
     from datasets import Dataset
     
+    # Detect tokenizer type
+    is_ethiobbpe = hasattr(tokenizer, 'encode_batch') or type(tokenizer).__name__ == 'EthioBBPE'
+    
     # Tokenize all texts
     def tokenize_function(examples):
-        return tokenizer(
-            examples["text"],
-            truncation=True,
-            max_length=max_length,
-            padding=False,
-            return_special_tokens_mask=False,
-        )
+        if is_ethiobbpe:
+            # EthioBBPE tokenizer
+            encoded = tokenizer.encode_batch(examples["text"])
+            input_ids = [item["ids"] for item in encoded]
+            return {"input_ids": input_ids}
+        else:
+            # HuggingFace tokenizer
+            return tokenizer(
+                examples["text"],
+                truncation=True,
+                max_length=max_length,
+                padding=False,
+                return_special_tokens_mask=False,
+            )
     
     dataset = Dataset.from_dict({"text": texts})
     tokenized_dataset = dataset.map(
