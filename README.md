@@ -20,7 +20,7 @@ Whether you are pre-training a foundation model on terabytes of text, performing
 
 ### 🔹 Native Ethiopian Tokenization
 
-NTF seamlessly integrates with **[EthioBBPE](https://github.com/nexuss0781/Ethio_BBPE)**, a specialized Byte-Pair Encoding tokenizer optimized for Amharic, Tigrinya, Afaan Oromo, and Ge'ez scripts. This integration ensures superior compression ratios and cultural nuance preservation for Ethiopian languages right out of the box.
+NTF seamlessly integrates with **[EthioBBPE](https://github.com/nexuss0781/Ethio_BBPE)**, a specialized Byte-Pair Encoding tokenizer optimized for Amharic and Ge'ez scripts. This integration ensures superior compression ratios and cultural nuance preservation for Ethiopian languages right out of the box.
 
 ```bash
 pip install ethiobbpe  # Optional: For enhanced Ethiopian language support
