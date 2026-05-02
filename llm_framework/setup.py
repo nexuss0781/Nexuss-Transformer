@@ -1,0 +1,36 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="llm_framework",
+    version="0.1.0",
+    description="Blank Slate Transformer Training Framework with RLHF Support",
+    author="Senior AI Engineer",
+    packages=find_packages(),
+    install_requires=[
+        "torch>=2.0.0",
+        "transformers>=4.56.2",
+        "accelerate>=0.20.0",
+        "peft>=0.19.0",
+        "trl>=1.3.0",
+        "datasets>=2.0.0",
+        "tokenizers>=0.21,<0.22",
+        "wandb>=0.15.0",
+        "optuna>=3.0.0",
+        "scipy>=1.10.0",
+        "numpy>=1.24.0",
+        "pyyaml>=6.0",
+        "tqdm>=4.65.0",
+    ],
+    python_requires=">=3.10",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    ],
+)
