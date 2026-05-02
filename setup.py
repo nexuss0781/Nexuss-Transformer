@@ -8,6 +8,11 @@ setup(
     author_email="nexuss0781@gmail.com",
     url="https://github.com/nexuss0781/Nexuss-Transformer",
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "ntf=cli.main:main",
+        ],
+    },
     install_requires=[
         "torch>=2.0.0",
         "transformers>=4.56.2",
@@ -24,6 +29,17 @@ setup(
         "pyyaml>=6.0",
         "tqdm>=4.65.0",
     ],
+    extras_require={
+        "flash-attn": ["flash-attn>=2.0.0"],
+        "deepspeed": ["deepspeed>=0.10.0"],
+        "onnx": ["onnx>=1.14.0", "onnxruntime>=1.15.0"],
+        "dev": [
+            "pytest>=7.0.0",
+            "black>=23.0.0",
+            "flake8>=6.0.0",
+            "mypy>=1.0.0",
+        ],
+    },
     python_requires=">=3.10",
     classifiers=[
         "Development Status :: 4 - Beta",
