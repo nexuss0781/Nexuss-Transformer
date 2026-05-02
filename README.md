@@ -6,11 +6,7 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/)
-
-[Features](#-features) • [EthioBBPE](#-powered-by-ethiobbpe) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)\n[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch)](https://pytorch.org/)\n[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/)\n[![EthioBBPE](https://img.shields.io/badge/🇪🇹-EthioBBPE-9370db?logo=python)](https://github.com/nexuss0781/Ethio_BBPE)\n\n[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization)
 
 </div>
 
@@ -22,128 +18,13 @@
 
 Whether you are pre-training a foundation model on terabytes of text, performing parameter-efficient fine-tuning (LoRA), or aligning models via RLHF (PPO/DPO), NTF offers a unified, modular, and scalable interface.
 
----
+### 🔹 Native Ethiopian Tokenization
 
-## 🇪🇹 Powered by EthioBBPE - State-of-the-Art Ethiopian Tokenizer
-
-<div align="center">
-
-![PyPI - Version](https://img.shields.io/pypi/v/EthioBBPE.svg)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/EthioBBPE.svg)
-[![Hugging Face](https://img.shields.io/badge/🤗-Hugging%20Face-yellow)](https://huggingface.co/Nexuss0781/Ethio-BBPE)
-[![GitHub](https://img.shields.io/badge/GitHub-repo-blue)](https://github.com/nexuss0781/Ethio_BBPE)
-
-</div>
-
-The **Nexuss Transformer Framework** is proudly powered by **[EthioBBPE](https://github.com/nexuss0781/Ethio_BBPE)**, our professional, production-ready Byte Pair Encoding (BPE) tokenizer specifically designed for **Amharic**, **Tigrinya**, **Afaan Oromo**, **Ge'ez**, and **biblical texts**.
-
-### 🏆 EthioBBPE Excellence
-
-EthioBBPE represents the gold standard for Ethiopian language NLP:
-
-- 🎯 **Perfect for Ethiopian Languages**: Optimized for Amharic, Tigrinya, Afaan Oromo, Ge'ez
-- 📜 **Biblical Text Specialist**: Trained on 61,769 lines of Synaxarium + Canon Biblical texts
-- ✅ **100% Reconstruction Accuracy**: Perfect encoding/decoding on Amharic biblical texts
-- 📦 **Extreme Compression**: 
-  - **89.8%** reduction with gzip (136 KB vocab)
-  - **95.7%** reduction with 8-bit quantization (56 KB vocab)
-- ⚡ **Blazing Fast Performance**:
-  - Single encoding: **< 1ms**
-  - Batch encoding (32 texts): **< 10ms**
-- 🤖 **Zero-Config Setup**: Auto-downloads from Hugging Face Hub with SHA256 integrity verification
-- 🔧 **Production Features**: Checkpointing, quantization (8-bit/4-bit), comprehensive metrics
-
-### 🚀 Quick Integration
+NTF seamlessly integrates with **[EthioBBPE](https://github.com/nexuss0781/Ethio_BBPE)**, a specialized Byte-Pair Encoding tokenizer optimized for Amharic, Tigrinya, Afaan Oromo, and Ge'ez scripts. This integration ensures superior compression ratios and cultural nuance preservation for Ethiopian languages right out of the box.
 
 ```bash
-pip install EthioBBPE
+pip install ethiobbpe  # Optional: For enhanced Ethiopian language support
 ```
-
-```python
-from ethiobbpe import EthioBBPETokenizer, AutoTokenizer
-
-# Method 1: Direct loading (auto-downloads from Hugging Face)
-tokenizer = EthioBBPETokenizer.from_pretrained()
-
-# Method 2: AutoTokenizer factory
-tokenizer = AutoTokenizer.from_pretrained("Nexuss0781/Ethio-BBPE")
-
-# Encode Amharic text
-text = "ሰላም ለኢዮብ ዘኢነበበ ከንቶ ።"
-encoded = tokenizer.encode(text)
-
-print(f"Tokens: {encoded.tokens}")
-print(f"Token IDs: {encoded.ids}")
-print(f"Vocabulary size: {tokenizer.get_vocab_size()}")  # 16,000 optimized tokens
-
-# Decode back with 100% accuracy
-decoded = tokenizer.decode(encoded.ids)
-assert decoded == text  # Perfect reconstruction guaranteed!
-
-# Batch processing
-texts = [
-    "በመዠመሪያ፡እግዚአብሔር፡ሰማይንና፡ምድርን፡ፈጠረ።",
-    "ወደ ቍስጥንጥንያ አገርም በደረሰች ጊዜ",
-    "ሐዋርያ መንፈስ ይቤ እንዘ ያነክር ሕይወቶ"
-]
-encodings = tokenizer.encode_batch(texts)
-for i, enc in enumerate(encodings):
-    print(f"Text {i}: {len(enc.tokens)} tokens")
-```
-
-### 📊 EthioBBPE Model Specifications
-
-| Property | Value |
-|----------|-------|
-| **Model Name** | EthioBBPE_AmharicBible |
-| **Vocabulary Size** | 16,000 tokens |
-| **Training Corpus** | ~27.5 MB high-quality Amharic biblical text |
-| **Datasets** | Synaxarium (366 texts) + Canon Biblical (61,403 parallel texts) |
-| **Compression** | Gzip Level 9 (65%+ reduction) |
-| **Reconstruction Accuracy** | 100% on test set |
-| **Special Tokens** | `[PAD]`, `[CLS]`, `[SEP]`, `[MASK]`, `[UNK]` |
-| **License** | Apache 2.0 |
-
-### 🌟 Advanced Features
-
-#### Ge'ez Punctuation Mastery
-```python
-# Ancient Ge'ez punctuation marks handled perfectly
-geez_text = "፠፠፠፠፠፠፠፠፠፠፠፠፠፠፠፠፠፠"
-encoded = tokenizer.encode(geez_text)
-print(f"Efficient tokenization: {encoded.tokens}")
-# Single token for repeated marks - optimal compression!
-```
-
-#### PyTorch DataLoader Integration
-```python
-import torch
-from torch.utils.data import Dataset
-
-class AmharicDataset(Dataset):
-    def __init__(self, texts, tokenizer, max_length=512):
-        self.texts = texts
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-    
-    def __len__(self):
-        return len(self.texts)
-    
-    def __getitem__(self, idx):
-        encoding = self.tokenizer.encode(
-            self.texts[idx],
-            truncation=True,
-            max_length=self.max_length
-        )
-        return {
-            "input_ids": torch.tensor(encoding.ids),
-            "attention_mask": torch.tensor(encoding.attention_mask)
-        }
-```
-
-👉 **Explore EthioBBPE**: [Full Documentation](https://github.com/nexuss0781/Ethio_BBPE) | [Hugging Face Model](https://huggingface.co/Nexuss0781/Ethio-BBPE)
-
----
 
 ## ✨ Key Features
 
