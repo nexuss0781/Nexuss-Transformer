@@ -168,8 +168,10 @@ class ModelRegistry:
         
         # Save model
         model.save_pretrained(model_dir)
-        tokenizer.save_pretrained(model_dir)
-        config.save_pretrained(model_dir) if hasattr(config, 'save_pretrained') else None
+        if tokenizer is not None:
+            tokenizer.save_pretrained(model_dir)
+        if hasattr(config, 'save_pretrained'):
+            config.save_pretrained(model_dir)
         
         # Compute hashes
         model_files = list(model_dir.glob("*.bin")) + list(model_dir.glob("*.safetensors"))

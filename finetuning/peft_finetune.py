@@ -92,21 +92,31 @@ class LoRAConfig:
     
     def to_peft_config(self) -> LoraConfig:
         """Convert to Hugging Face PEFT LoraConfig."""
-        return LoraConfig(
-            r=self.r,
-            lora_alpha=self.alpha,
-            lora_dropout=self.dropout,
-            target_modules=self.target_modules,
-            bias=self.bias,
-            task_type=self.task_type,
-            inference_mode=self.inference_mode,
-            modules_to_save=self.modules_to_save,
-            init_lora_weights=self.init_lora_weights,
-            layers_to_transform=self.layers_to_transform,
-            layer_pattern=self.layer_pattern,
-            rank_pattern=self.rank_pattern,
-            alpha_pattern=self.alpha_pattern,
-        )
+        # Build config dict with only supported parameters
+        config_kwargs = {
+            "r": self.r,
+            "lora_alpha": self.alpha,
+            "lora_dropout": self.dropout,
+            "target_modules": self.target_modules,
+            "bias": self.bias,
+            "task_type": self.task_type,
+            "inference_mode": self.inference_mode,
+            "modules_to_save": self.modules_to_save,
+            "init_lora_weights": self.init_lora_weights,
+            "layers_to_transform": self.layers_to_transform,
+        }
+        
+        # Only add rank_pattern and alpha_pattern if they are not None (must be dict type)
+        if self.rank_pattern is not None and isinstance(self.rank_pattern, dict):
+            config_kwargs["rank_pattern"] = self.rank_pattern
+        if self.alpha_pattern is not None and isinstance(self.alpha_pattern, dict):
+            config_kwargs["alpha_pattern"] = self.alpha_pattern
+        
+        # Use layers_pattern instead of layer_pattern (newer PEFT API)
+        if self.layer_pattern is not None:
+            config_kwargs["layers_pattern"] = [self.layer_pattern] if isinstance(self.layer_pattern, str) else self.layer_pattern
+        
+        return LoraConfig(**config_kwargs)
     
     @classmethod
     def default(cls) -> "LoRAConfig":

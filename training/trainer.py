@@ -99,13 +99,24 @@ class Trainer:
         elif self.config.mixed_precision == Precision.BF16:
             mixed_precision = "bf16"
         
-        return Accelerator(
-            gradient_accumulation_steps=self.config.gradient_accumulation_steps,
-            mixed_precision=mixed_precision,
-            log_with=self.config.report_to if self.config.report_to != "none" else None,
-            project_dir=self.config.output_dir,
-            ddp_find_unused_parameters=self.config.ddp_find_unused_parameters,
-        )
+        accelerator_kwargs = {
+            "gradient_accumulation_steps": self.config.gradient_accumulation_steps,
+            "mixed_precision": mixed_precision,
+            "log_with": self.config.report_to if self.config.report_to != "none" else None,
+            "project_dir": self.config.output_dir,
+        }
+        
+        # Only add ddp_find_unused_parameters if supported by current accelerate version
+        try:
+            from accelerate import Accelerator
+            import inspect
+            sig = inspect.signature(Accelerator.__init__)
+            if "ddp_find_unused_parameters" in sig.parameters:
+                accelerator_kwargs["ddp_find_unused_parameters"] = self.config.ddp_find_unused_parameters
+        except (ImportError, AttributeError):
+            pass
+        
+        return Accelerator(**accelerator_kwargs)
     
     def _create_optimizer(self) -> torch.optim.Optimizer:
         """Create optimizer based on config."""

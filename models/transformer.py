@@ -6,6 +6,7 @@ autoregressive language modeling. Built from scratch with PyTorch, integrating
 seamlessly with Hugging Face's ecosystem.
 """
 
+import json
 import math
 from typing import Optional, Tuple, List, Union
 
@@ -420,6 +421,32 @@ class NexussTransformer(nn.Module):
         self.config.tie_word_embeddings = True
         self.lm_head = None
     
+    def prepare_inputs_for_generation(
+        self,
+        input_ids: torch.LongTensor,
+        past_key_values: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        **kwargs,
+    ) -> dict:
+        """
+        Prepare inputs for generation step (required for PEFT compatibility).
+        
+        This method is called by PEFT's get_peft_model to enable proper
+        generation with KV caching.
+        """
+        if past_key_values is not None:
+            # If we have KV cache, only use the last token
+            input_ids = input_ids[:, -1:]
+        
+        return {
+            "input_ids": input_ids,
+            "past_key_values": past_key_values,
+            "attention_mask": attention_mask,
+            "inputs_embeds": inputs_embeds,
+            "use_cache": True,
+        }
+    
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -590,7 +617,7 @@ class NexussTransformer(nn.Module):
         for _ in range(max_length):
             # Forward pass
             outputs = self(
-                input_ids=generated,
+                input_ids=generated[:, -1:] if past_key_values is not None else generated,
                 past_key_values=past_key_values,
                 use_cache=True,
             )
@@ -650,3 +677,61 @@ class NexussTransformer(nn.Module):
             "non_trainable": total - trainable,
             "total_millions": f"{total / 1e6:.2f}M",
         }
+
+    def save_pretrained(self, save_directory: str):
+        """
+        Save model weights and config to a directory (HuggingFace-compatible).
+        
+        Args:
+            save_directory: Directory path to save the model
+        """
+        import os
+        from pathlib import Path
+        
+        save_dir = Path(save_directory)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save model state dict
+        torch.save(self.state_dict(), save_dir / "pytorch_model.bin")
+        
+        # Save config
+        config_dict = self.config.to_dict()
+        with open(save_dir / "config.json", "w") as f:
+            json.dump(config_dict, f, indent=2)
+    
+    @classmethod
+    def from_pretrained(cls, pretrained_model_name_or_path: str, **kwargs):
+        """
+        Load a model from a pre-trained checkpoint (HuggingFace-compatible).
+        
+        Args:
+            pretrained_model_name_or_path: Path to model directory or model name
+            **kwargs: Additional arguments passed to NTFConfig
+        
+        Returns:
+            NexussTransformer model loaded with pretrained weights
+        """
+        import json
+        from pathlib import Path
+        
+        model_path = Path(pretrained_model_name_or_path)
+        
+        # Load config
+        config_path = model_path / "config.json"
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                config_dict = json.load(f)
+            config = NTFConfig.from_dict(config_dict)
+        else:
+            config = NTFConfig(**kwargs)
+        
+        # Create model
+        model = cls(config)
+        
+        # Load weights
+        weights_path = model_path / "pytorch_model.bin"
+        if weights_path.exists():
+            state_dict = torch.load(weights_path, map_location="cpu", weights_only=True)
+            model.load_state_dict(state_dict)
+        
+        return model

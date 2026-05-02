@@ -1,11 +1,11 @@
 {
   "summary": {
     "total_tests": 22,
-    "passed": 16,
-    "failed": 6,
-    "pass_rate": "72.73%",
-    "start_time": "2026-05-02T12:41:11.704872",
-    "end_time": "2026-05-02T12:41:16.144353",
+    "passed": 22,
+    "failed": 0,
+    "pass_rate": "100.00%",
+    "start_time": "2026-05-02T13:26:46.088651",
+    "end_time": "2026-05-02T13:26:49.930167",
     "device": "cpu"
   },
   "model_config": {
@@ -41,7 +41,7 @@
       "metrics": {
         "embedding_params": 128000
       },
-      "timestamp": "2026-05-02T12:41:11.804640"
+      "timestamp": "2026-05-02T13:26:46.169829"
     },
     {
       "component": "Model Architecture",
@@ -52,7 +52,7 @@
         "max_seq_len": 256,
         "head_dim": 32
       },
-      "timestamp": "2026-05-02T12:41:11.806791"
+      "timestamp": "2026-05-02T13:26:46.171187"
     },
     {
       "component": "Model Architecture",
@@ -62,7 +62,7 @@
       "metrics": {
         "params": 128
       },
-      "timestamp": "2026-05-02T12:41:11.824947"
+      "timestamp": "2026-05-02T13:26:46.187578"
     },
     {
       "component": "Model Architecture",
@@ -72,7 +72,7 @@
       "metrics": {
         "ffn_params": 196608
       },
-      "timestamp": "2026-05-02T12:41:11.845567"
+      "timestamp": "2026-05-02T13:26:46.191792"
     },
     {
       "component": "Model Architecture",
@@ -82,7 +82,7 @@
       "metrics": {
         "attn_params": 65536
       },
-      "timestamp": "2026-05-02T12:41:11.866148"
+      "timestamp": "2026-05-02T13:26:46.208733"
     },
     {
       "component": "Model Architecture",
@@ -92,7 +92,7 @@
       "metrics": {
         "block_params": 262400
       },
-      "timestamp": "2026-05-02T12:41:11.924721"
+      "timestamp": "2026-05-02T13:26:46.246418"
     },
     {
       "component": "Model Architecture",
@@ -102,15 +102,17 @@
       "metrics": {
         "total_params": 1177728
       },
-      "timestamp": "2026-05-02T12:41:12.046024"
+      "timestamp": "2026-05-02T13:26:46.346766"
     },
     {
       "component": "Model Architecture",
       "test_name": "Autoregressive Generation",
-      "passed": false,
-      "details": "Failed: The size of tensor a (21) must match the size of tensor b (11) at non-singleton dimension 3",
-      "metrics": {},
-      "timestamp": "2026-05-02T12:41:12.308200"
+      "passed": true,
+      "details": "Generated shape: torch.Size([1, 40]) (prompt: 10 \u2192 40)",
+      "metrics": {
+        "generated_tokens": 30
+      },
+      "timestamp": "2026-05-02T13:26:46.829925"
     },
     {
       "component": "Training System",
@@ -120,7 +122,7 @@
       "metrics": {
         "batch_size": 3
       },
-      "timestamp": "2026-05-02T12:41:12.309822"
+      "timestamp": "2026-05-02T13:26:46.846135"
     },
     {
       "component": "Training System",
@@ -130,33 +132,33 @@
       "metrics": {
         "num_samples": 30
       },
-      "timestamp": "2026-05-02T12:41:15.297043"
+      "timestamp": "2026-05-02T13:26:48.775836"
     },
     {
       "component": "Training System",
       "test_name": "Checkpoint Manager",
       "passed": true,
-      "details": "Checkpoint saved and loaded: /tmp/tmpws1fvp0l/checkpoints/checkpoints/checkpoint-000010_20260502_124115",
+      "details": "Checkpoint saved and loaded: /tmp/tmpfslyk58z/checkpoints/checkpoints/checkpoint-000010_20260502_132648",
       "metrics": {
         "checkpoint_size_mb": 4.723737
       },
-      "timestamp": "2026-05-02T12:41:15.432444"
+      "timestamp": "2026-05-02T13:26:48.926876"
     },
     {
       "component": "Training System",
       "test_name": "Trainer Initialization",
-      "passed": false,
-      "details": "Failed: Accelerator.__init__() got an unexpected keyword argument 'ddp_find_unused_parameters'",
+      "passed": true,
+      "details": "Trainer initialized with model, optimizer, scheduler",
       "metrics": {},
-      "timestamp": "2026-05-02T12:41:15.508395"
+      "timestamp": "2026-05-02T13:26:48.994127"
     },
     {
       "component": "Fine-tuning",
       "test_name": "Full Fine-tuning",
-      "passed": false,
-      "details": "Failed: Accelerator.__init__() got an unexpected keyword argument 'ddp_find_unused_parameters'",
+      "passed": true,
+      "details": "Full fine-tuning trainer with discriminative LR initialized",
       "metrics": {},
-      "timestamp": "2026-05-02T12:41:15.584626"
+      "timestamp": "2026-05-02T13:26:49.109154"
     },
     {
       "component": "Fine-tuning",
@@ -166,15 +168,19 @@
       "metrics": {
         "trainable_after_freeze": 9
       },
-      "timestamp": "2026-05-02T12:41:15.647467"
+      "timestamp": "2026-05-02T13:26:49.170399"
     },
     {
       "component": "Fine-tuning",
       "test_name": "LoRA PEFT",
-      "passed": false,
-      "details": "Failed: LoraConfig.__init__() got an unexpected keyword argument 'layer_pattern'",
-      "metrics": {},
-      "timestamp": "2026-05-02T12:41:15.709079"
+      "passed": true,
+      "details": "LoRA applied: 16,384/1,194,112 trainable (1.37%)",
+      "metrics": {
+        "total_params": 1194112,
+        "trainable_params": 16384,
+        "trainable_ratio": 1.3720656018865902
+      },
+      "timestamp": "2026-05-02T13:26:49.253654"
     },
     {
       "component": "Reward Modeling & RLHF",
@@ -182,7 +188,7 @@
       "passed": true,
       "details": "Reward model configuration validated",
       "metrics": {},
-      "timestamp": "2026-05-02T12:41:15.709344"
+      "timestamp": "2026-05-02T13:26:49.253893"
     },
     {
       "component": "Reward Modeling & RLHF",
@@ -193,15 +199,17 @@
         "beta": 0.1,
         "loss_type": "sigmoid"
       },
-      "timestamp": "2026-05-02T12:41:15.709359"
+      "timestamp": "2026-05-02T13:26:49.253904"
     },
     {
       "component": "Continual Learning",
       "test_name": "Elastic Weight Consolidation",
-      "passed": false,
-      "details": "Failed: 'MiniDataLoader' object has no attribute 'device'",
-      "metrics": {},
-      "timestamp": "2026-05-02T12:41:15.806371"
+      "passed": true,
+      "details": "EWC computed with 38 parameter groups",
+      "metrics": {
+        "ewc_loss": 0.0
+      },
+      "timestamp": "2026-05-02T13:26:49.587781"
     },
     {
       "component": "Continual Learning",
@@ -211,17 +219,17 @@
       "metrics": {
         "buffer_size": 100
       },
-      "timestamp": "2026-05-02T12:41:15.807091"
+      "timestamp": "2026-05-02T13:26:49.589516"
     },
     {
       "component": "Metrics & Utilities",
       "test_name": "Perplexity Computation",
       "passed": true,
-      "details": "Perplexity: 1017.2601",
+      "details": "Perplexity: 999.8356",
       "metrics": {
-        "perplexity": 1017.2600911296075
+        "perplexity": 999.8356006217891
       },
-      "timestamp": "2026-05-02T12:41:15.907708"
+      "timestamp": "2026-05-02T13:26:49.689824"
     },
     {
       "component": "Metrics & Utilities",
@@ -231,15 +239,17 @@
       "metrics": {
         "accuracy": 0.0
       },
-      "timestamp": "2026-05-02T12:41:16.025627"
+      "timestamp": "2026-05-02T13:26:49.789733"
     },
     {
       "component": "Metrics & Utilities",
       "test_name": "Model Versioning",
-      "passed": false,
-      "details": "Failed: 'NexussTransformer' object has no attribute 'save_pretrained'",
-      "metrics": {},
-      "timestamp": "2026-05-02T12:41:16.143991"
+      "passed": true,
+      "details": "Model registered: test-model v1.0.0",
+      "metrics": {
+        "registered_versions": 1
+      },
+      "timestamp": "2026-05-02T13:26:49.929978"
     }
   ]
 }

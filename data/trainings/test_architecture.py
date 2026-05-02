@@ -806,11 +806,13 @@ class ArchitectureTestSuite:
             
             # Test Fisher computation (with minimal samples)
             class MiniDataLoader:
+                def __init__(self, device=None):
+                    self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
                 def __iter__(self):
                     for _ in range(2):
                         yield {"input_ids": torch.randint(0, 100, (2, 16)).to(self.device)}
             
-            ewc.compute_fisher(MiniDataLoader(), self.device)
+            ewc.compute_fisher(MiniDataLoader(device=self.device), self.device)
             
             assert len(ewc.fisher) > 0
             assert len(ewc.optimal_params) > 0
@@ -886,10 +888,12 @@ class ArchitectureTestSuite:
             input_ids = torch.randint(0, self.config.vocab_size, (batch_size, seq_len)).to(self.device)
             
             class MiniDataLoader:
+                def __init__(self, device=None):
+                    self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
                 def __iter__(self):
                     yield {"input_ids": input_ids, "labels": input_ids}
             
-            perplexity = compute_perplexity(model, MiniDataLoader(), self.device)
+            perplexity = compute_perplexity(model, MiniDataLoader(device=self.device), self.device)
             
             assert perplexity > 0
             assert not torch.isnan(torch.tensor(perplexity))
@@ -919,10 +923,12 @@ class ArchitectureTestSuite:
             input_ids = torch.randint(0, self.config.vocab_size, (batch_size, seq_len)).to(self.device)
             
             class MiniDataLoader:
+                def __init__(self, device=None):
+                    self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
                 def __iter__(self):
                     yield {"input_ids": input_ids, "labels": input_ids}
             
-            accuracy = compute_accuracy(model, MiniDataLoader(), self.device)
+            accuracy = compute_accuracy(model, MiniDataLoader(device=self.device), self.device)
             
             assert 0 <= accuracy <= 1
             
