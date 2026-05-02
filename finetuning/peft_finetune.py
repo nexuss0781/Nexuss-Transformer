@@ -103,9 +103,9 @@ class LoRAConfig:
             modules_to_save=self.modules_to_save,
             init_lora_weights=self.init_lora_weights,
             layers_to_transform=self.layers_to_transform,
-            layer_pattern=self.layer_pattern,
-            rank_pattern=self.rank_pattern,
-            alpha_pattern=self.alpha_pattern,
+            layers_pattern=self.layer_pattern,  # Fixed: use layers_pattern instead of layer_pattern
+            rank_pattern=self.rank_pattern or {},
+            alpha_pattern=self.alpha_pattern or {},
         )
     
     @classmethod
@@ -230,3 +230,42 @@ class PEFTTrainer:
     def get_model(self) -> nn.Module:
         """Get the wrapped model."""
         return self.model
+
+
+def setup_lora(
+    model: nn.Module,
+    r: int = 8,
+    lora_alpha: int = 16,
+    lora_dropout: float = 0.05,
+    target_modules: Optional[list] = None,
+    bias: str = "none",
+    task_type: str = "CAUSAL_LM",
+) -> nn.Module:
+    """
+    Setup LoRA adapters on a model.
+    
+    Args:
+        model: Base model to apply LoRA to
+        r: LoRA rank
+        lora_alpha: LoRA alpha scaling factor
+        lora_dropout: Dropout probability
+        target_modules: Module names to target (default: q_proj, v_proj)
+        bias: Whether to train bias params
+        task_type: PEFT task type
+    
+    Returns:
+        Model with LoRA adapters applied
+    """
+    if target_modules is None:
+        target_modules = ["q_proj", "v_proj"]
+    
+    config = LoraConfig(
+        r=r,
+        lora_alpha=lora_alpha,
+        lora_dropout=lora_dropout,
+        target_modules=target_modules,
+        bias=bias,
+        task_type=task_type,
+    )
+    
+    return get_peft_model(model, config)

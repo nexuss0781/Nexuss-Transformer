@@ -9,6 +9,107 @@ Integrated with EthioBBPE tokenizer for Ethiopian languages.
 from typing import Dict, List, Optional, Any, Union
 import torch
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Dataset, DataLoader
+from datasets import Dataset as HFDataset
+
+
+class TextDataset(Dataset):
+    """
+    Simple text dataset that loads texts from a file.
+    
+    Args:
+        file_path: Path to text file (one sample per line)
+        max_length: Maximum sequence length
+        tokenizer_name: Tokenizer to use ('char' for character-level)
+    """
+    
+    def __init__(
+        self,
+        file_path: str,
+        max_length: int = 512,
+        tokenizer_name: str = "char",
+    ):
+        self.max_length = max_length
+        
+        # Load texts from file
+        with open(file_path, 'r', encoding='utf-8') as f:
+            self.texts = [line.strip() for line in f if line.strip()]
+        
+        # Create simple character-level tokenizer
+        self.char_to_idx = {}
+        self.idx_to_char = {}
+        self._build_vocab()
+    
+    def _build_vocab(self):
+        """Build character-level vocabulary."""
+        all_chars = set()
+        for text in self.texts:
+            all_chars.update(text)
+        
+        # Special tokens
+        self.char_to_idx['<pad>'] = 0
+        self.char_to_idx['<unk>'] = 1
+        
+        idx = len(self.char_to_idx)
+        for char in sorted(all_chars):
+            if char not in self.char_to_idx:
+                self.char_to_idx[char] = idx
+                idx += 1
+        
+        self.idx_to_char = {v: k for k, v in self.char_to_idx.items()}
+    
+    def _tokenize(self, text: str) -> List[int]:
+        """Tokenize text to character IDs."""
+        return [self.char_to_idx.get(c, self.char_to_idx['<unk>']) for c in text]
+    
+    def __len__(self) -> int:
+        return len(self.texts)
+    
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        text = self.texts[idx]
+        input_ids = self._tokenize(text)[:self.max_length]
+        
+        # Ensure we have at least some tokens
+        if len(input_ids) == 0:
+            input_ids = [self.char_to_idx['<pad>']]
+        
+        return {
+            "input_ids": torch.tensor(input_ids, dtype=torch.long),
+            "labels": torch.tensor(input_ids, dtype=torch.long),
+        }
+
+
+def create_dataloader(
+    dataset: Dataset,
+    batch_size: int = 4,
+    shuffle: bool = True,
+    num_workers: int = 0,
+    pin_memory: bool = False,
+) -> DataLoader:
+    """
+    Create a DataLoader from a dataset.
+    
+    Args:
+        dataset: Dataset to load from
+        batch_size: Batch size
+        shuffle: Whether to shuffle data
+        num_workers: Number of worker processes
+        pin_memory: Pin memory for faster GPU transfer
+    
+    Returns:
+        DataLoader instance
+    """
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        collate_fn=lambda x: {
+            "input_ids": torch.stack([item["input_ids"] for item in x]),
+            "labels": torch.stack([item["labels"] for item in x]),
+        },
+    )
 
 
 class DataCollatorForLanguageModeling:

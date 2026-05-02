@@ -7,7 +7,7 @@ seamlessly with Hugging Face's ecosystem.
 """
 
 import math
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Dict, Any
 
 import torch
 import torch.nn as nn
@@ -587,10 +587,16 @@ class NexussTransformer(nn.Module):
         eos_token_id = eos_token_id or self.config.eos_token_id
         pad_token_id = pad_token_id or self.config.pad_token_id
         
-        for _ in range(max_length):
+        for i in range(max_length):
+            # For first iteration, use full sequence; afterwards, use only the last token
+            if i == 0:
+                model_input = generated
+            else:
+                model_input = generated[:, -1:]  # Only pass the last token
+            
             # Forward pass
             outputs = self(
-                input_ids=generated,
+                input_ids=model_input,
                 past_key_values=past_key_values,
                 use_cache=True,
             )
@@ -639,6 +645,66 @@ class NexussTransformer(nn.Module):
                 break
         
         return generated
+    
+    def save_pretrained(self, save_directory: str, metadata: Optional[Dict[str, Any]] = None):
+        """
+        Save model weights and configuration to a directory (HuggingFace compatible).
+        
+        Args:
+            save_directory: Directory to save the model
+            metadata: Optional metadata dict to include
+        """
+        import os
+        import json
+        
+        os.makedirs(save_directory, exist_ok=True)
+        
+        # Save model weights
+        torch.save(self.state_dict(), os.path.join(save_directory, "pytorch_model.bin"))
+        
+        # Save config
+        config_dict = self.config.to_dict()
+        if metadata:
+            config_dict["_metadata"] = metadata
+        with open(os.path.join(save_directory, "config.json"), "w") as f:
+            json.dump(config_dict, f, indent=2)
+    
+    @classmethod
+    def from_pretrained(cls, model_path: str, config: Optional[NTFConfig] = None) -> "NexussTransformer":
+        """
+        Load model from a pretrained checkpoint (HuggingFace compatible).
+        
+        Args:
+            model_path: Path to model directory or config
+            config: Optional config override
+        
+        Returns:
+            Loaded NexussTransformer model
+        """
+        import os
+        import json
+        
+        # Load config
+        if config is None:
+            config_path = os.path.join(model_path, "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r") as f:
+                    config_dict = json.load(f)
+                    # Remove metadata if present
+                    config_dict.pop("_metadata", None)
+                config = NTFConfig.from_dict(config_dict)
+            else:
+                raise ValueError(f"Config not found at {model_path}")
+        
+        # Create model
+        model = cls(config)
+        
+        # Load weights
+        weights_path = os.path.join(model_path, "pytorch_model.bin")
+        if os.path.exists(weights_path):
+            model.load_state_dict(torch.load(weights_path, map_location="cpu", weights_only=True))
+        
+        return model
     
     def count_parameters(self) -> dict:
         """Count model parameters."""

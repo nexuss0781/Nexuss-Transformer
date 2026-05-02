@@ -806,11 +806,14 @@ class ArchitectureTestSuite:
             
             # Test Fisher computation (with minimal samples)
             class MiniDataLoader:
+                def __init__(self, device):
+                    self.device = device
+                
                 def __iter__(self):
                     for _ in range(2):
                         yield {"input_ids": torch.randint(0, 100, (2, 16)).to(self.device)}
             
-            ewc.compute_fisher(MiniDataLoader(), self.device)
+            ewc.compute_fisher(MiniDataLoader(self.device), self.device)
             
             assert len(ewc.fisher) > 0
             assert len(ewc.optimal_params) > 0
