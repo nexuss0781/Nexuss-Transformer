@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="llm_framework",
-    version="0.1.0",
-    description="Blank Slate Transformer Training Framework with RLHF Support",
-    author="Senior AI Engineer",
+    name="nexuss-transformer",
+    version="1.0.0",
+    description="Nexuss Transformer Framework (NTF) - Blank Slate LLM Training with RLHF & EthioBBPE Support",
+    author="nexuss0781",
+    author_email="nexuss0781@gmail.com",
+    url="https://github.com/nexuss0781/Nexuss-Transformer",
     packages=find_packages(),
     install_requires=[
         "torch>=2.0.0",
@@ -14,6 +16,7 @@ setup(
         "trl>=1.3.0",
         "datasets>=2.0.0",
         "tokenizers>=0.21,<0.22",
+        "ethiobbpe>=1.0.0",
         "wandb>=0.15.0",
         "optuna>=3.0.0",
         "scipy>=1.10.0",
@@ -23,7 +26,7 @@ setup(
     ],
     python_requires=">=3.10",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",

@@ -20,8 +20,8 @@ from torch.optim.lr_scheduler import LambdaLR
 from accelerate import Accelerator
 from tqdm import tqdm
 
-from llm_framework.training.config import TrainingConfig, OptimizerType, SchedulerType, Precision
-from llm_framework.training.checkpoint import CheckpointManager
+from training.config import TrainingConfig, OptimizerType, SchedulerType, Precision
+from training.checkpoint import CheckpointManager
 
 
 class Trainer:

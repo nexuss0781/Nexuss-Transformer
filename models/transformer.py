@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from llm_framework.models.config import TransformerConfig
+from models.config import NTFConfig
 
 
 class RotaryEmbedding(nn.Module):
@@ -147,7 +147,7 @@ class FeedForward(nn.Module):
     Feed-forward network with configurable activation.
     """
     
-    def __init__(self, config: TransformerConfig):
+    def __init__(self, config: NTFConfig):
         super().__init__()
         self.config = config
         
@@ -181,7 +181,7 @@ class MultiHeadAttention(nn.Module):
     Multi-head self-attention with optional sliding window.
     """
     
-    def __init__(self, config: TransformerConfig, is_causal: bool = True):
+    def __init__(self, config: NTFConfig, is_causal: bool = True):
         super().__init__()
         self.config = config
         self.is_causal = is_causal
@@ -295,7 +295,7 @@ class TransformerBlock(nn.Module):
     Single transformer decoder block with pre-normalization.
     """
     
-    def __init__(self, config: TransformerConfig, layer_idx: int):
+    def __init__(self, config: NTFConfig, layer_idx: int):
         super().__init__()
         self.layer_idx = layer_idx
         
@@ -339,7 +339,7 @@ class TransformerBlock(nn.Module):
         return hidden_states, present_key_value
 
 
-class DecoderOnlyTransformer(nn.Module):
+class NexussTransformer(nn.Module):
     """
     Complete decoder-only transformer model.
     
@@ -353,10 +353,10 @@ class DecoderOnlyTransformer(nn.Module):
     - KV caching for efficient inference
     
     Args:
-        config: TransformerConfig instance with model hyperparameters
+        config: NTFConfig instance with model hyperparameters
     """
     
-    def __init__(self, config: TransformerConfig):
+    def __init__(self, config: NTFConfig):
         super().__init__()
         self.config = config
         self.gradient_checkpointing = config.gradient_checkpointing

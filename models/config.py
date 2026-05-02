@@ -10,9 +10,9 @@ from typing import Optional, List
 
 
 @dataclass
-class TransformerConfig:
+class NTFConfig:
     """
-    Configuration class for decoder-only transformer model.
+    Configuration class for Nexuss Transformer Framework decoder-only model.
     
     Args:
         vocab_size: Size of the vocabulary
@@ -37,6 +37,8 @@ class TransformerConfig:
         eos_token_id: End of sequence token ID
         use_cache: Whether to use KV cache during inference
         gradient_checkpointing: Whether to use gradient checkpointing
+        use_rmsnorm: Whether to use RMSNorm instead of LayerNorm
+        use_swiglu: Whether to use SwiGLU activation
     """
     
     # Core architecture
@@ -124,7 +126,7 @@ class TransformerConfig:
         return self.d_model // self.n_heads
     
     @classmethod
-    def small(cls) -> "TransformerConfig":
+    def small(cls) -> "NTFConfig":
         """Small model configuration (~60M params)."""
         return cls(
             vocab_size=50257,
@@ -136,7 +138,7 @@ class TransformerConfig:
         )
     
     @classmethod
-    def medium(cls) -> "TransformerConfig":
+    def medium(cls) -> "NTFConfig":
         """Medium model configuration (~350M params)."""
         return cls(
             vocab_size=50257,
@@ -148,7 +150,7 @@ class TransformerConfig:
         )
     
     @classmethod
-    def large(cls) -> "TransformerConfig":
+    def large(cls) -> "NTFConfig":
         """Large model configuration (~1.5B params)."""
         return cls(
             vocab_size=50257,
@@ -167,6 +169,6 @@ class TransformerConfig:
         }
     
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "TransformerConfig":
+    def from_dict(cls, config_dict: dict) -> "NTFConfig":
         """Create config from dictionary."""
         return cls(**config_dict)

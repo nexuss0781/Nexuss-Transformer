@@ -9,8 +9,8 @@ from typing import Optional, Dict, Any, List
 import torch
 import torch.nn as nn
 
-from llm_framework.training.trainer import Trainer, TrainingConfig
-from llm_framework.training.data import DataCollatorForLanguageModeling
+from training.trainer import Trainer, TrainingConfig
+from training.data import DataCollatorForLanguageModeling
 
 
 class FullFinetuneTrainer(Trainer):

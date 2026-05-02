@@ -1,12 +1,11 @@
 """Fine-tuning package - Full and parameter-efficient fine-tuning."""
 
-from llm_framework.finetuning.peft_finetune import LoRAConfig, PEFTTrainer
-from llm_framework.finetuning.full_finetune import FullFinetuneTrainer
-from llm_framework.finetuning.freeze import LayerFreezer
+from finetuning.peft_finetune import setup_lora
+from finetuning.full_finetune import full_finetune
+from finetuning.freeze import freeze_layers
 
 __all__ = [
-    "LoRAConfig",
-    "PEFTTrainer",
-    "FullFinetuneTrainer",
-    "LayerFreezer",
+    "setup_lora",
+    "full_finetune",
+    "freeze_layers",
 ]

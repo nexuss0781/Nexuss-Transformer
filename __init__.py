@@ -1,50 +1,49 @@
 """
-LLM Framework - Blank Slate Transformer Training System
+Nexuss Transformer Framework (NTF) - Blank Slate Transformer Training System
 
 A comprehensive framework for training decoder-only transformer models from scratch,
 with full support for fine-tuning, RLHF, and continual learning.
+Optimized for Ethiopian languages with EthioBBPE tokenizer integration.
 """
 
-from llm_framework.models import (
-    TransformerConfig,
-    DecoderOnlyTransformer,
+from models import (
+    NTFConfig,
+    NexussTransformer,
 )
-from llm_framework.training import (
-    Trainer,
-    TrainingConfig,
+from training import (
+    NTFTrainer,
+    TrainingArguments,
     CheckpointManager,
 )
-from llm_framework.finetuning import (
-    LoRAConfig,
-    PEFTTrainer,
-    FullFinetuneTrainer,
-    LayerFreezer,
+from finetuning import (
+    setup_lora,
+    full_finetune,
+    freeze_layers,
 )
-from llm_framework.reward import (
+from reward import (
     RewardModel,
     PPOTrainer,
     DPOTrainer,
 )
-from llm_framework.utils import (
+from utils import (
     ContinualLearner,
     ModelVersioner,
     EvaluationMetrics,
 )
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 __all__ = [
     # Models
-    "TransformerConfig",
-    "DecoderOnlyTransformer",
+    "NTFConfig",
+    "NexussTransformer",
     # Training
-    "Trainer",
-    "TrainingConfig",
+    "NTFTrainer",
+    "TrainingArguments",
     "CheckpointManager",
     # Fine-tuning
-    "LoRAConfig",
-    "PEFTTrainer",
-    "FullFinetuneTrainer",
-    "LayerFreezer",
+    "setup_lora",
+    "full_finetune",
+    "freeze_layers",
     # Reward & RLHF
     "RewardModel",
     "PPOTrainer",
