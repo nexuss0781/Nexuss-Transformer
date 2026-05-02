@@ -166,7 +166,7 @@ dpo.train(preference_dataset=human_prefs)
 
 ```mermaid
 graph TD
-    A[Raw Text Data] --> B(Tokenization)
+    A[Raw Text Data] --> B[Tokenization]
     B --> C{Training Mode}
     
     C -->|Blank Slate| D[Pre-Training Loop]
