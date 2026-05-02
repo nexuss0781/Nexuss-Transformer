@@ -170,8 +170,8 @@ graph TD
     B --> C{Training Mode}
     
     C -->|Blank Slate| D[Pre-Training Loop]
-    C -->|Adaptation| E[Fine-Tuning (Full/LoRA)]
-    C -->|Alignment| F[RLHF (PPO/DPO)]
+    C -->|Adaptation| E[Fine-Tuning Full/LoRA]
+    C -->|Alignment| F[RLHF PPO/DPO]
     
     D --> G[Base Model Weights]
     E --> G
@@ -185,7 +185,7 @@ graph TD
     
     subgraph Optimization
     L[Gradient Checkpointing]
-    M[Mixed Precision (FP16/BF16)]
+    M[Mixed Precision FP16/BF16]
     N[DeepSpeed ZeRO]
     end
     
