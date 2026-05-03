@@ -25,6 +25,7 @@ class RewardConfig:
     model_name: str = "nexuss-transformer-base"
     num_labels: int = 1
     pooling_strategy: str = "last"  # last, mean, max
+    pad_token_id: Optional[int] = None
     
     # LoRA settings for efficient training
     use_lora: bool = True
@@ -55,6 +56,10 @@ class RewardConfig:
     # Mixed precision
     fp16: bool = True
     bf16: bool = False
+
+
+# Alias for compatibility with spec
+PreferenceDataset = RewardDataset
 
 
 class RewardDataset(Dataset):
@@ -188,6 +193,39 @@ def create_reward_model(config: RewardConfig) -> PreTrainedModel:
         model.print_trainable_parameters()
     
     return model
+
+
+class RewardModel(nn.Module):
+    """Wrapper class for reward model with NTF integration"""
+    
+    def __init__(self, config: RewardConfig):
+        super().__init__()
+        self.config = config
+        self.base_model = None
+        
+    def load_base_model(self, base_model: PreTrainedModel):
+        """Load a base model and add classification head"""
+        self.base_model = base_model
+        # The base_model should already have classification head if loaded from AutoModelForSequenceClassification
+        # Otherwise, we would need to add it here
+        
+    def forward(self, input_ids, attention_mask=None, labels=None):
+        """Forward pass returning reward scores"""
+        outputs = self.base_model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            labels=labels
+        )
+        
+        rewards = outputs.logits.squeeze(-1)  # [batch_size]
+        
+        return {'rewards': rewards, 'loss': outputs.loss if hasattr(outputs, 'loss') else None}
+    
+    def compute_reward(self, input_ids, attention_mask=None):
+        """Compute reward for given sequences"""
+        with torch.no_grad():
+            outputs = self.forward(input_ids, attention_mask)
+            return outputs['rewards']
 
 
 def train_reward_model(
