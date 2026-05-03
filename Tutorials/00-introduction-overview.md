@@ -12,22 +12,77 @@ This is your comprehensive guide to training, fine-tuning, and deploying transfo
 1. [Introduction & Overview](00-introduction-overview.md) ← You are here
 2. [Understanding Blank Slate Models](01-blank-slate-models.md)
 3. [Your First Training Run](02-first-training-run.md)
-4. [Data Preparation & Tokenization](03-data-preparation.md)
+4. [Full Fine-Tuning Fundamentals](03-full-finetuning.md)
 
 ### Intermediate Track
-5. [Full Fine-Tuning Fundamentals](04-full-finetuning.md)
-6. [Parameter-Efficient Fine-Tuning (PEFT/LoRA)](05-peft-lora.md)
-7. [Layer Freezing Strategies](06-layer-freezing.md)
-8. [Evaluation & Validation](07-evaluation-validation.md)
+5. [Parameter-Efficient Fine-Tuning (PEFT/LoRA)](05-peft-lora.md)
+6. [Advanced Fine-Tuning Techniques](04-advanced-finetuning.md)
+7. [Reinforcement Learning from Human Feedback (RLHF)](06-rlhf.md)
+8. [Validation & Testing](07-validation-testing.md)
 
 ### Advanced Track
-9. [Reinforcement Learning from Human Feedback (RLHF)](08-rlhf-intro.md)
-10. [Reward Model Training](09-reward-model-training.md)
-11. [PPO (Proximal Policy Optimization)](10-ppo-training.md)
-12. [DPO (Direct Preference Optimization)](11-dpo-training.md)
-13. [Version Control & Release Management](12-versioning-release.md)
-14. [Continual Learning](13-continual-learning.md)
-15. [Scaling to Production](14-scaling-production.md)
+9. [Continual Learning Lifecycle](08-continual-learning-lifecycle.md)
+10. [Release Management](09-release-management.md)
+11. [Distributed Training at Scale](10-distributed-training-scale.md)
+12. [Inference Optimization & Deployment](11-inference-optimization-deployment.md)
+13. [MLOps Automation & Governance](12-mlops-automation-governance.md)
+14. [Troubleshooting & Debugging](13-troubleshooting-debugging.md)
+
+---
+
+## NTF Architecture Overview
+
+Before diving into fine-tuning, understand the core components you'll use:
+
+### Training Components
+- **FullFinetuneTrainer**: Production-ready training orchestrator with distributed support via Accelerate
+- **PEFTTrainer**: Parameter-efficient fine-tuning with LoRA, AdaLoRA, and LoHa adapters
+- **LayerFreezer**: Selectively freeze backbone layers to reduce memory and prevent knowledge degradation
+
+### Model Management
+- **ModelRegistry**: Central hub for loading, configuring, and versioning models with semantic versioning
+- **Adapter Utilities**: Load and save PEFT adapters with metadata tracking
+
+### Data Pipeline
+- **TextDataset**: Unified data loading with built-in chat template support
+- **Data Collators**: Preconfigured collators for common tasks
+
+### Evaluation & RLHF
+- **Metrics Utilities**: Comprehensive suite (perplexity, BLEU, ROUGE, BERTScore)
+- **RewardModel**: Reward model implementation for RLHF
+- **RLHFPipeline**: End-to-end RLHF workflow with PPO
+
+### Configuration System
+- **NTFConfig**: YAML-based configuration with nested classes for models, training, data, PEFT
+- **Config Validation**: Catch configuration errors before training
+
+These components work together to provide a streamlined fine-tuning experience from research to production.
+
+---
+
+## Understanding Fine-Tuning Types
+
+Fine-tuning adapts pre-trained models to specific tasks. NTF supports three main approaches:
+
+### 1. Full Fine-Tuning
+- **What**: Update all model parameters
+- **When**: Sufficient VRAM, domain shift is large
+- **NTF Component**: `FullFinetuneTrainer` + `LayerFreezer`
+- **Trade-offs**: Best performance, highest resource usage
+
+### 2. Parameter-Efficient Fine-Tuning (PEFT)
+- **What**: Update small adapter parameters, freeze backbone
+- **When**: Limited VRAM, multiple tasks, quick iteration
+- **NTF Component**: `PEFTTrainer` (LoRA, AdaLoRA, LoHa)
+- **Trade-offs**: Lower resource usage, slightly reduced performance
+
+### 3. Continual Fine-Tuning
+- **What**: Sequential fine-tuning on multiple domains
+- **When**: Lifelong learning, multi-domain deployment
+- **NTF Component**: `ContinualLearningWrapper` + regularization
+- **Trade-offs**: Maintains knowledge across domains, requires careful tuning
+
+Choose your approach based on resources and requirements. The following tutorials will demonstrate each method using NTF's native components.
 
 ---
 
@@ -188,14 +243,14 @@ Continual learning lets models learn new tasks without forgetting old ones—cri
 
 ## Hardware Requirements
 
-| Model Size | Parameters | Minimum RAM | Recommended GPU | Training Time* |
-|------------|------------|-------------|-----------------|----------------|
-| Small      | ~60M       | 8 GB        | 1x RTX 3090     | 6-12 hours     |
-| Medium     | ~350M      | 16 GB       | 2x RTX 4090     | 1-2 days       |
-| Large      | ~1B        | 32 GB       | 4x A100         | 3-5 days       |
-| XL         | ~7B        | 80 GB+      | 8x A100         | 1-2 weeks      |
+| Model Size | Parameters | Minimum RAM | Recommended GPU |
+|------------|------------|-------------|-----------------|
+| Small      | ~60M       | 8 GB        | 1x RTX 3090     |
+| Medium     | ~350M      | 16 GB       | 2x RTX 4090     |
+| Large      | ~1B        | 32 GB       | 4x A100         |
+| XL         | ~7B        | 80 GB+      | 8x A100         |
 
-*Estimates vary based on dataset size and configuration
+*VRAM requirements vary based on sequence length, batch size, precision, and optimization techniques. Use NTF's `LayerFreezer` and gradient checkpointing to reduce memory footprint. Start with small batch sizes and scale up based on available memory.*
 
 ---
 
