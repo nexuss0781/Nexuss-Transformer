@@ -12,7 +12,7 @@
 [![EthioBBPE](https://img.shields.io/badge/🇪🇹-EthioBBPE-9370db?logo=python)](https://github.com/nexuss0781/Ethio_BBPE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/nexuss0781/Nexuss-Transformer)
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization) • [GitHub Repo](https://github.com/nexuss0781/Nexuss-Transformer)
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization) • [huggingface model](https://huggingface.co/Nexuss0781/Nexuss-Transformer)
 
 </div>
 
