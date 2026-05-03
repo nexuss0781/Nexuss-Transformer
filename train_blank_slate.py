@@ -684,10 +684,13 @@ def main(args):
     
     print("\n[7/7] Initializing trainer...")
     
+    # Use tokenized_dataset if we tokenized, otherwise use original dataset with custom collator
+    train_data = tokenized_dataset if tokenizer else dataset
+    
     trainer = Trainer(
         model=model,
         config=training_config,
-        train_dataset=dataset,
+        train_dataset=train_data,
         eval_dataset=None,  # Can add validation split if needed
         data_collator=data_collator,
     )
