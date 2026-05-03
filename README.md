@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/)
+[![HuggingFace](https://img.shields.io/badge/🤗-Transformers-f9d84b?logo=huggingface)](https://huggingface.co/Nexuss0781/Nexuss-Transformer)
 [![EthioBBPE](https://img.shields.io/badge/🇪🇹-EthioBBPE-9370db?logo=python)](https://github.com/nexuss0781/Ethio_BBPE)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/nexuss0781/Nexuss-Transformer)
 
