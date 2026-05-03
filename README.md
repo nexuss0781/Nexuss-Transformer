@@ -1,6 +1,6 @@
 # 🌌 Nexuss Transformer Framework (NTF)
 
-> **From Blank Slate to Superintelligence.**  
+> **From Blank Slate to Superintelligence.**
 > A production-grade, end-to-end framework for training, fine-tuning, and aligning Decoder-Only Large Language Models from scratch.
 
 <div align="center">
@@ -88,7 +88,7 @@ from ntf.models import TransformerConfig, TransformerModel
 from ntf.training import Trainer, TrainingConfig
 
 # Define Model Architecture (Small Preset)
-config = TransformerConfig.from_preset("small") 
+config = TransformerConfig.from_preset("small")
 model = TransformerModel(config)
 
 # Configure Training
@@ -179,27 +179,27 @@ For a step-by-step learning experience, check out our **Interactive Documentatio
 graph TD
     A[Raw Text Data] --> B(Tokenization)
     B --> C{Training Mode}
-    
+
     C -->|Blank Slate| D[Pre-Training Loop]
     C -->|Adaptation| E[Fine-Tuning Full/LoRA]
     C -->|Alignment| F[RLHF PPO/DPO]
-    
+
     D --> G[Base Model Weights]
     E --> G
     F --> H[Aligned Model]
-    
+
     G --> I[Checkpoint Manager]
     H --> I
-    
+
     I --> J[Model Registry / Versioning]
     J --> K[Inference / Deployment]
-    
+
     subgraph Optimization
     L[Gradient Checkpointing]
     M[Mixed Precision FP16/BF16]
     N[DeepSpeed ZeRO]
     end
-    
+
     D -.-> L
     D -.-> M
     D -.-> N
@@ -263,7 +263,7 @@ Built upon the shoulders of giants:
 
 <div align="center">
 
-**Nexuss Transformer Framework**  
+**Nexuss Transformer Framework**
 *Empowering the next generation of Language Models.*
 
 [GitHub](https://github.com/nexuss0781/Nexuss-Transformer) • [Issues](https://github.com/nexuss0781/Nexuss-Transformer/issues) • [Discussions](https://github.com/nexuss0781/Nexuss-Transformer/discussions)
