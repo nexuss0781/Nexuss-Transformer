@@ -1,263 +1,374 @@
-# Blank Slate Training - Ethiopian Religious Texts
+# NTF Blank Slate Training Guide
 
-## Overview
+## 1. EthioBBPE Tokenization Status ✅
 
-This training setup creates a **blank slate** (from scratch) decoder-only transformer model trained on Ethiopian Orthodox religious texts. The model will learn these datasets as its **base knowledge**, which can then be frozen for downstream tasks.
+**YES, EthioBBPE is fully integrated and utilized!**
 
-## Datasets
+The training script automatically leverages the NTFTokenizer with EthioBBPE in three ways:
 
-### 1. Synaxarium Dataset
-- **Source**: Ethiopian Orthodox daily readings
-- **Size**: 366 entries (one for each day of the Ethiopian calendar)
-- **Language**: Amharic
-- **Content**: Complete synaxarium texts for all 13 months
-
-### 2. Canon Biblical Dataset
-- **Source**: Parallel Bible corpus
-- **Size**: 31,920 verses
-- **Languages**: Amharic (primary) + English (optional)
-- **Books**: 67 books including Deuterocanonical texts
-- **Structure**: Book, Chapter, Verse format
-
-**Combined Dataset Statistics:**
-- Total samples: 32,286
-- Total characters: ~5.3 million
-- Average length: 165 characters per sample
-
-## Model Architecture
-
-```
-Small Decoder-Only Transformer (~25M parameters)
-├── Vocabulary: 379 tokens (character-level)
-├── Embedding dimension: 512
-├── Transformer layers: 6
-├── Attention heads: 8
-├── Feed-forward dimension: 2048
-├── Max sequence length: 512
-├── RoPE positional encoding: Yes
-└── Activation: SwiGLU
+### Automatic Loading (Recommended)
+```python
+# The script automatically loads from HuggingFace Hub
+tokenizer = NTFTokenizer.from_pretrained("Nexuss0781/Ethio-BBPE")
 ```
 
-## Training Configuration
-
-| Parameter | Value |
-|-----------|-------|
-| Epochs | 10 |
-| Effective batch size | 16 |
-| Learning rate | 1e-3 |
-| LR scheduler | Linear decay |
-| Warmup ratio | 5% |
-| Weight decay | 0.01 |
-| Gradient accumulation | 2 steps |
-| Checkpoint frequency | Every 100 steps |
-| Max checkpoints kept | 3 |
-| Precision | FP32 |
-| Seed | 42 |
-
-**Total training steps**: ~20,180 steps
-
-## Quick Start
-
-### Option 1: Run with Bash Script
+### Manual Loading (If you have custom files)
 ```bash
-cd /workspace
-./run_training.sh
+python train_blank_slate.py \
+  --vocab_file path/to/vocab.json \
+  --merges_file path/to/merges.txt
 ```
 
-### Option 2: Run Directly with Python
+### Fallback Mechanism
+If EthioBBPE is unavailable, the script falls back to character-level tokenization, but **this is NOT recommended** for Amharic/Ge'ez text.
+
+### Verification
+When you run the training, you should see:
+```
+Loading default EthioBBPE tokenizer from HuggingFace Hub...
+NTFTokenizer loaded successfully!
+Vocabulary size: 16000
+```
+
+**Critical Notes:**
+- EthioBBPE vocabulary: **16,000 tokens** (optimized for Amharic/Ge'ez)
+- Properly handles Ethiopian script morphology
+- Significantly better than character-level or standard BPE
+- **DO NOT** use `--use_char_tokenizer` flag unless absolutely necessary
+
+---
+
+## 2. Model Parameter Counts
+
+| Model Size | Parameters | GPU Memory (FP16) | Recommended Use |
+|------------|-----------|-------------------|-----------------|
+| **SMALL**  | 27.07M    | ~100 MB           | Testing, prototyping |
+| **MEDIUM** | 167.40M   | ~650 MB           | Production, good balance |
+| **LARGE**  | 1,240.83M | ~4.8 GB           | Maximum performance |
+
+### Architecture Details
+
+**SMALL (27M):**
+- Hidden size: 512
+- Layers: 6
+- Attention heads: 8
+- FFN size: 2048
+
+**MEDIUM (167M):**
+- Hidden size: 1024
+- Layers: 12
+- Attention heads: 16
+- FFN size: 4096
+
+**LARGE (1.24B):**
+- Hidden size: 2048
+- Layers: 24
+- Attention heads: 32
+- FFN size: 8192
+
+All models use:
+- ✅ Tied embeddings (saves memory)
+- ✅ RoPE (Rotary Positional Embeddings)
+- ✅ SwiGLU activation
+- ✅ RMSNorm normalization
+
+---
+
+## 3. Recommended Training Configurations
+
+### Dataset Statistics
+- **Synaxarium:** 366 entries
+- **Bible:** 31,920 verses
+- **Total:** 32,286 samples
+- **Estimated tokens:** ~1.6M (with EthioBBPE)
+
+Since this is a relatively small dataset, we recommend **more epochs** to ensure proper convergence.
+
+---
+
+### 🚀 QUICK START COMMANDS
+
+#### For SMALL Model (Testing/Prototyping)
 ```bash
-cd /workspace
-python3 train_blank_slate.py
+python train_blank_slate.py \
+  --model_size small \
+  --num_epochs 50 \
+  --batch_size 32 \
+  --learning_rate 0.001 \
+  --warmup_steps 1000 \
+  --max_seq_length 512 \
+  --mixed_precision bf16 \
+  --gradient_checkpointing \
+  --output_dir checkpoints/blank_slate_small \
+  --save_every_n_epochs 5 \
+  --log_every_n_steps 50
 ```
 
-## Expected Output
-
+#### For MEDIUM Model (RECOMMENDED for Production) ⭐
+```bash
+python train_blank_slate.py \
+  --model_size medium \
+  --num_epochs 30 \
+  --batch_size 16 \
+  --learning_rate 0.0005 \
+  --warmup_steps 2000 \
+  --max_seq_length 512 \
+  --mixed_precision bf16 \
+  --gradient_checkpointing \
+  --output_dir checkpoints/blank_slate_medium \
+  --save_every_n_epochs 5 \
+  --log_every_n_steps 100
 ```
-============================================================
-BLANK SLATE TRAINING - Ethiopian Religious Texts
-============================================================
 
-[1/6] Loading datasets...
-Loaded 366 Synaxarium entries
-Loaded 31920 Canon Biblical verses
+#### For LARGE Model (Maximum Performance)
+```bash
+python train_blank_slate.py \
+  --model_size large \
+  --num_epochs 20 \
+  --batch_size 8 \
+  --gradient_accumulation_steps 4 \
+  --learning_rate 0.0002 \
+  --warmup_steps 5000 \
+  --max_seq_length 512 \
+  --mixed_precision bf16 \
+  --gradient_checkpointing \
+  --output_dir checkpoints/blank_slate_large \
+  --save_every_n_epochs 3 \
+  --log_every_n_steps 200
+```
 
-[2/6] Creating combined dataset...
+---
 
-=== Dataset Statistics ===
-Synaxarium entries: 366
-Biblical verses: 31920
-Total samples: 32286
-Total characters: 5,336,571
-Average length: 165.3 chars
+### Detailed Parameter Explanations
 
-[3/6] Creating tokenizer...
-Vocabulary size: 379
+#### Essential Parameters
 
-[4/6] Creating blank slate model...
-Model architecture: Small (25.37M parameters)
-  - Vocabulary: 379
-  - Embedding dim: 512
-  - Layers: 6
-  - Heads: 8
-  - Max sequence: 512
+| Parameter | Small | Medium | Large | Description |
+|-----------|-------|--------|-------|-------------|
+| `--model_size` | small | medium | large | Model architecture size |
+| `--num_epochs` | 50 | 30 | 20 | Training epochs (more for smaller data) |
+| `--batch_size` | 32 | 16 | 8 | Samples per batch (adjust for GPU memory) |
+| `--learning_rate` | 1e-3 | 5e-4 | 2e-4 | Initial learning rate |
+| `--warmup_steps` | 1000 | 2000 | 5000 | LR warmup period |
 
-[5/6] Preparing training dataset...
+#### Performance Parameters
 
-[6/6] Configuring training...
-Training configuration:
-  - Output directory: /workspace/outputs/blank_slate_ethiopian_religious
-  - Epochs: 10
-  - Effective batch size: 16
-  - Learning rate: 0.001
-  - Warmup ratio: 0.05
-  - Save every 100 steps
+| Parameter | Recommended | Description |
+|-----------|-------------|-------------|
+| `--mixed_precision` | bf16 | Use BF16 (or fp16 if BF16 unavailable) |
+| `--gradient_checkpointing` | ✓ | Enable to save memory |
+| `--gradient_accumulation_steps` | 1-4 | Accumulate gradients for larger effective batch |
+| `--max_seq_length` | 512 | Maximum sequence length |
 
-============================================================
-INITIALIZING TRAINER...
-============================================================
+#### Output & Logging
 
-============================================================
-STARTING TRAINING...
-============================================================
-Training:   0%|          | 0/20180 [00:00<?, ?it/s]
-Step 10: loss=2.5432, lr=5.00e-05
-Step 20: loss=2.3421, lr=1.00e-04
+| Parameter | Recommended | Description |
+|-----------|-------------|-------------|
+| `--output_dir` | checkpoints/... | Where to save checkpoints |
+| `--save_every_n_epochs` | 3-5 | Save checkpoint frequency |
+| `--log_every_n_steps` | 50-200 | Logging frequency |
+| `--resume_from_checkpoint` | (optional) | Resume training from checkpoint |
+
+---
+
+### GPU Memory Requirements
+
+| Model Size | Min GPU (FP32) | Recommended (FP16/BF16) | With Gradient Checkpointing |
+|------------|---------------|------------------------|----------------------------|
+| SMALL | 2 GB | 1 GB | < 1 GB |
+| MEDIUM | 8 GB | 4 GB | 2 GB |
+| LARGE | 24 GB | 12 GB | 6 GB |
+
+**Note:** If you get OOM (Out of Memory) errors:
+1. Reduce `--batch_size`
+2. Increase `--gradient_accumulation_steps`
+3. Enable `--gradient_checkpointing`
+4. Use `--mixed_precision bf16` or `fp16`
+
+---
+
+### Advanced Options
+
+#### Include English for Bilingual Training
+```bash
+python train_blank_slate.py \
+  ... \
+  --include_english
+```
+
+#### Custom Tokenizer Path
+```bash
+python train_blank_slate.py \
+  ... \
+  --tokenizer_path "path/to/custom/tokenizer"
+```
+
+#### Disable Advanced Features (Not Recommended)
+```bash
+python train_blank_slate.py \
+  ... \
+  --no_rope \
+  --no_swiglu \
+  --no_rmsnorm
+```
+
+#### Resume Training
+```bash
+python train_blank_slate.py \
+  ... \
+  --resume_from_checkpoint checkpoints/blank_slate_medium/checkpoint_epoch_10
+```
+
+---
+
+## 4. Monitoring Training
+
+### What to Watch For
+
+1. **Loss Decrease:** Should steadily decrease over epochs
+   - Initial loss: ~4.0-6.0
+   - Target loss: < 2.0 (depends on model size)
+
+2. **Learning Rate Schedule:**
+   - Warmup phase: LR increases linearly
+   - After warmup: LR decays with cosine schedule
+
+3. **Checkpoint Saving:**
+   - Checkpoints saved every N epochs
+   - Latest checkpoint always updated
+
+### Sample Training Output
+```
+Epoch 1/30 [====================] 100%
+Step: 100 | Loss: 4.523 | LR: 0.00025 | Time: 45.2s
+Step: 200 | Loss: 3.891 | LR: 0.00050 | Time: 42.1s
 ...
-Saved checkpoint to outputs/blank_slate_ethiopian_religious/checkpoints/...
+Epoch 1 completed! Average Loss: 3.756
+Checkpoint saved: checkpoints/blank_slate_medium/checkpoint_epoch_1
+
+Validation Loss: 3.234
 ```
 
-## Output Structure
+---
 
-```
-outputs/blank_slate_ethiopian_religious/
-├── checkpoints/
-│   ├── checkpoint-000100_YYYYMMDD_HHMMSS/
-│   │   ├── model.pt          # Model weights
-│   │   ├── optimizer.pt      # Optimizer state
-│   │   ├── scheduler.pt      # LR scheduler state
-│   │   └── training_state.json
-│   ├── checkpoint-000200_.../
-│   └── ...
-└── logs/                     # Training logs
-```
+## 5. Post-Training
 
-## After Training
-
-### 1. Freeze Base Knowledge
-The trained model now has Ethiopian religious texts as base knowledge. To freeze these weights:
+### Using Your Trained Model
 
 ```python
-from models.transformer import NexussTransformer
-from models.config import NTFConfig
+from ntf import NTFTransformer, NTFTokenizer
 
 # Load trained model
-model = NexussTransformer.from_pretrained("outputs/blank_slate_ethiopian_religious/checkpoints/checkpoint-latest")
+model = NTFTransformer.from_pretrained("checkpoints/blank_slate_medium/checkpoint_epoch_30")
+tokenizer = NTFTokenizer.from_pretrained("Nexuss0781/Ethio-BBPE")
 
-# Freeze all parameters
-for param in model.parameters():
-    param.requires_grad = False
-
-print(f"Base knowledge frozen: {sum(p.numel() for p in model.parameters()):,} parameters")
-```
-
-### 2. Fine-tune on Downstream Tasks
-Add task-specific layers on top of the frozen base:
-
-```python
-# Add classification head or other task-specific layers
-# Only train the new layers while keeping base knowledge frozen
-```
-
-### 3. Evaluate Model Performance
-```python
 # Generate text
-from transformers import GenerationConfig
-
-input_text = "ስንክሳር - ወር: መስከረም, ቀን: 1"
-output = model.generate(input_text, max_length=256)
-print(output)
+prompt = "<doc><type>ስንክሳር</type><ወር>መስከረም</ወር><ቀን>1</ቀን><content>"
+inputs = tokenizer.encode(prompt, return_tensors="pt")
+outputs = model.generate(inputs, max_length=200, temperature=0.7)
+text = tokenizer.decode(outputs[0])
+print(text)
 ```
 
-## Hardware Requirements
+### Model Evaluation
 
-### Minimum (CPU Training)
-- RAM: 8GB+
-- Storage: 10GB+
-- Time: ~4-8 hours for full training
-
-### Recommended (GPU Training)
-- GPU: NVIDIA GPU with 8GB+ VRAM
-- RAM: 16GB+
-- Storage: 20GB+
-- Time: ~30-60 minutes for full training
-
-## Customization
-
-### Adjust Model Size
-Edit `train_blank_slate.py`:
-
-```python
-# For even smaller model (~10M params)
-model_config = NTFConfig(
-    vocab_size=vocab_size,
-    d_model=256,
-    n_layers=4,
-    n_heads=4,
-    max_seq_len=256,
-)
-
-# For larger model (~60M params)
-model_config = NTFConfig.small()  # Default
-model_config.d_model = 768
-model_config.n_layers = 12
+After training, evaluate on held-out data:
+```bash
+python evaluate_model.py \
+  --model_path checkpoints/blank_slate_medium/checkpoint_epoch_30 \
+  --test_data data/test.parquet
 ```
 
-### Adjust Training Duration
-```python
-training_config = TrainingConfig(
-    num_train_epochs=5,      # Reduce epochs
-    max_steps=5000,          # Or set specific step count
-    save_steps=50,           # More frequent checkpoints
-)
+---
+
+## 6. Troubleshooting
+
+### Issue: EthioBBPE Not Loading
+**Solution:**
+```bash
+pip install huggingface_hub
+# Or provide manual tokenizer files
+python train_blank_slate.py --vocab_file vocab.json --merges_file merges.txt
 ```
 
-### Include English Text (Bilingual Training)
-```python
-biblical_texts = load_canon_biblical_dataset(
-    str(biblical_path), 
-    include_english=True  # Enable bilingual
-)
+### Issue: Out of Memory (OOM)
+**Solution:**
+1. Reduce batch_size: `--batch_size 4`
+2. Enable gradient checkpointing: `--gradient_checkpointing`
+3. Use mixed precision: `--mixed_precision bf16`
+4. Reduce sequence length: `--max_seq_length 256`
+
+### Issue: Loss Not Decreasing
+**Solution:**
+1. Lower learning rate: `--learning_rate 0.0001`
+2. Increase warmup: `--warmup_steps 5000`
+3. Check data quality
+4. Verify tokenizer is working correctly
+
+### Issue: Slow Training
+**Solution:**
+1. Enable mixed precision: `--mixed_precision bf16`
+2. Reduce logging frequency: `--log_every_n_steps 200`
+3. Use larger batch with gradient accumulation
+
+---
+
+## 7. Best Practices Summary
+
+✅ **DO:**
+- Use EthioBBPE tokenizer (default behavior)
+- Enable mixed precision (bf16 or fp16)
+- Use gradient checkpointing for larger models
+- Start with MEDIUM model for production
+- Monitor loss curves
+- Save checkpoints frequently
+- Use structured XML-like format for data
+
+❌ **DON'T:**
+- Use character tokenizer unless necessary
+- Train LARGE model without sufficient GPU memory
+- Set learning rate too high (>0.001)
+- Skip warmup steps
+- Train without gradient checkpointing on limited memory
+
+---
+
+## Quick Reference Card
+
+```bash
+# RECOMMENDED: Medium model, production-ready
+python train_blank_slate.py \
+  --model_size medium \
+  --num_epochs 30 \
+  --batch_size 16 \
+  --learning_rate 0.0005 \
+  --warmup_steps 2000 \
+  --max_seq_length 512 \
+  --mixed_precision bf16 \
+  --gradient_checkpointing \
+  --output_dir checkpoints/blank_slate_medium
+
+# FAST TESTING: Small model
+python train_blank_slate.py \
+  --model_size small \
+  --num_epochs 10 \
+  --batch_size 32 \
+  --learning_rate 0.001 \
+  --output_dir checkpoints/blank_slate_small_test
+
+# MAXIMUM PERFORMANCE: Large model (requires good GPU)
+python train_blank_slate.py \
+  --model_size large \
+  --num_epochs 20 \
+  --batch_size 8 \
+  --gradient_accumulation_steps 4 \
+  --learning_rate 0.0002 \
+  --warmup_steps 5000 \
+  --mixed_precision bf16 \
+  --gradient_checkpointing \
+  --output_dir checkpoints/blank_slate_large
 ```
 
-## Troubleshooting
+---
 
-### Out of Memory
-- Reduce `per_device_train_batch_size`
-- Increase `gradient_accumulation_steps`
-- Enable `gradient_checkpointing=True`
-
-### Slow Training
-- Use GPU if available
-- Set `dataloader_num_workers=4`
-- Enable mixed precision: `mixed_precision=Precision.FP16`
-
-### Poor Convergence
-- Increase learning rate to 2e-3
-- Increase warmup ratio to 0.1
-- Train for more epochs
-
-## License
-
-This training setup is part of the Nexuss-Transformer Framework and follows the same license terms.
-
-## Citation
-
-If you use this model in your research:
-```bibtex
-@misc{nexuss-transformer,
-  title={Nexuss Transformer Framework: Blank Slate LLM Training},
-  author={Nexuss0781},
-  year={2024},
-  howpublished={\\url{https://huggingface.co/Nexuss0781/Nexuss-Transformer}}
-}
-```
+For questions or issues, check the training logs and adjust parameters accordingly. The key is to start with the MEDIUM model configuration and tune based on your specific hardware and requirements.

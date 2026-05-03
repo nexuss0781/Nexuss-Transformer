@@ -1,11 +1,13 @@
-```
-# Dependencies
+```gitignore
+# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Environment
+# Dependencies
+venv/
+.venv/
 .env
 .env.local
 *.env.*
@@ -13,7 +15,12 @@ __pycache__/
 # Logs
 *.log
 
-# Editor/IDE
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# IDE files
 .vscode/
 .idea/
 *.swp
@@ -23,19 +30,5 @@ __pycache__/
 # Build artifacts
 dist/
 build/
-*.so
-*.dylib
-*.dll
-*.exe
-*.out
-
-# Coverage
-.coverage
-coverage/
-htmlcov/
-
-# Testing
-.pytest_cache/
-.mypy_cache/
-*.pytest/
+target/
 ```
