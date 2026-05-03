@@ -171,28 +171,6 @@
             margin-bottom: 0.5rem;
             padding-left: 0.75rem;
         }
-        
-        .level-badge {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.5rem;
-            border-radius: 9999px;
-            font-weight: 500;
-        }
-        
-        .level-beginner {
-            background: rgba(34, 197, 94, 0.2);
-            color: #4ade80;
-        }
-        
-        .level-intermediate {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
-        }
-        
-        .level-advanced {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -227,12 +205,6 @@
             
             <!-- Filter -->
             <div class="p-4 border-b border-slate-800">
-                <div class="flex gap-2">
-                    <button onclick="filterByLevel('all')" class="flex-1 px-3 py-1.5 text-xs font-medium rounded-md bg-slate-800 hover:bg-slate-700 transition-colors">All</button>
-                    <button onclick="filterByLevel('Beginner')" class="flex-1 px-3 py-1.5 text-xs font-medium rounded-md bg-green-900/20 text-green-400 hover:bg-green-900/30 transition-colors">Beginner</button>
-                    <button onclick="filterByLevel('Intermediate')" class="flex-1 px-3 py-1.5 text-xs font-medium rounded-md bg-yellow-900/20 text-yellow-400 hover:bg-yellow-900/30 transition-colors">Intermediate</button>
-                    <button onclick="filterByLevel('Advanced')" class="flex-1 px-3 py-1.5 text-xs font-medium rounded-md bg-red-900/20 text-red-400 hover:bg-red-900/30 transition-colors">Advanced</button>
-                </div>
             </div>
             
             <!-- Tree Navigation -->
@@ -415,7 +387,6 @@
                 tree.appendChild(header);
                 
                 categories[category].sort((a, b) => a.number - b.number).forEach(item => {
-                    const levelClass = `level-${item.level.toLowerCase()}`;
                     const treeItem = document.createElement('div');
                     treeItem.className = 'tree-item p-3 rounded-lg cursor-pointer mb-1';
                     treeItem.onclick = () => loadTutorial(item);
@@ -425,12 +396,7 @@
                                 <span class="text-xs font-mono font-medium text-slate-300">${item.id}</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-2 mb-1">
-                                    <h4 class="font-medium text-sm truncate">${item.title}</h4>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="level-badge ${levelClass}">${item.level}</span>
-                                </div>
+                                <h4 class="font-medium text-sm truncate">${item.title}</h4>
                             </div>
                         </div>
                     `;
@@ -466,16 +432,6 @@
                 document.getElementById('contentArea').scrollTop = 0;
             } catch (error) {
                 contentDiv.innerHTML = `<div class="text-center py-12 text-red-400">Error loading tutorial: ${error.message}</div>`;
-            }
-        }
-        
-        // Filter by level
-        function filterByLevel(level) {
-            if (level === 'all') {
-                renderTree(tutorials);
-            } else {
-                const filtered = tutorials.filter(t => t.level === level);
-                renderTree(filtered);
             }
         }
         
