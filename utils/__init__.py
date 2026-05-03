@@ -12,6 +12,9 @@ from .continual_learning import (
     GEMOptimizer,
     LwFLoss,
     create_continual_learning_wrapper,
+    SIRegularizer,
+    LwFRegularizer,
+    ContinualLearningWrapper,
 )
 
 from .versioning import (
@@ -50,6 +53,9 @@ __all__ = [
     "GEMOptimizer",
     "LwFLoss",
     "create_continual_learning_wrapper",
+    "SIRegularizer",
+    "LwFRegularizer",
+    "ContinualLearningWrapper",
     
     # Versioning
     "ModelStage",
