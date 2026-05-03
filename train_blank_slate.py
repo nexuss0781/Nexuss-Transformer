@@ -419,7 +419,8 @@ def create_training_config(
         max_grad_norm=max_grad_norm,
         seed=seed,
         report_to="none",  # Can be changed to 'wandb' or 'tensorboard'
-        dataloader_num_workers=0,
+        dataloader_num_workers=args.num_workers,
+        dataloader_prefetch_factor=args.prefetch_factor,
         dataloader_pin_memory=True,
     )
     
@@ -984,6 +985,12 @@ def parse_args():
     # Run name
     parser.add_argument("--run_name", type=str, default="blank_slate_ethiopian_religious",
                         help="Name of the training run")
+    
+    # Data loading optimization
+    parser.add_argument("--num_workers", type=int, default=4,
+                        help="Number of subprocesses for data loading (default: 4, increase for GPU)")
+    parser.add_argument("--prefetch_factor", type=int, default=2,
+                        help="Number of batches to prefetch per worker (default: 2)")
     
     return parser.parse_args()
 

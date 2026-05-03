@@ -212,6 +212,7 @@ class Trainer:
                 shuffle=True,
                 collate_fn=self.data_collator,
                 num_workers=self.config.dataloader_num_workers,
+                prefetch_factor=self.config.dataloader_prefetch_factor if self.config.dataloader_num_workers > 0 else None,
                 pin_memory=self.config.dataloader_pin_memory,
             )
         else:
@@ -224,6 +225,7 @@ class Trainer:
                 shuffle=False,
                 collate_fn=self.data_collator,
                 num_workers=self.config.dataloader_num_workers,
+                prefetch_factor=self.config.dataloader_prefetch_factor if self.config.dataloader_num_workers > 0 else None,
                 pin_memory=self.config.dataloader_pin_memory,
             )
         else:
