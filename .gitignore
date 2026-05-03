@@ -1,60 +1,82 @@
 ```markdown
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-dist/
-build/
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
-
 # Dependencies
-.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.julia/
+.julia-*/
+zig*/
+.Python
+env/
 venv/
-node_modules/
-.mypy_cache/
-.pytest_cache/
-target/
-.gradle/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+.python-version
 
-# Logs and temp files
+# Build artifacts
+build/
+.sconsign.dblite
+.pip-wheel-metadata/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
-*.tmp
-*.swp
-*.swo
+.pytest_cache/
+.hypothesis/
+cover/
 
-# Environment
+# Distribution / packaging
+.pybuild/
+.deps/
+.installed.cfg
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment variables
 .env
-.env.local
+.venv
+.envrc
+!.env.example
 .env.*
+!*.env.example
 
-# Editors
+# Editor and IDE specific
 .vscode/
 .idea/
-
-# System files
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Coverage
-coverage/
-htmlcov/
-.coverage
+# ML/AI specific
+*.model
+*.pb
+*.tflite
+wandb/
+mlruns/
+results/
+checkpoints/
+logs/
 
-# Compressed files
+# Compression and archives
 *.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
 *.gz
-*.tar
-*.tgz
+*.rar
+*.7z
 *.bz2
 *.xz
-*.7z
-*.rar
 *.zst
 *.lz4
 *.lzh
@@ -65,8 +87,4 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
 ```

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This tutorial covers continual learning strategies for updating models with new data while preventing catastrophic forgetting, along with complete model lifecycle management including versioning, deployment, monitoring, and retirement.
+This tutorial covers continual learning strategies for updating models with new data while preventing catastrophic forgetting, along with complete model lifecycle management including versioning, deployment, monitoring, and retirement. We'll integrate NTF's configuration system for hyperparameter tuning and use the `ContinualLearningWrapper` for EWC regularization.
 
 ## Table of Contents
 
@@ -12,10 +12,11 @@ This tutorial covers continual learning strategies for updating models with new 
 4. [Regularization-Based Methods](#regularization-based-methods)
 5. [Architecture-Based Methods](#architecture-based-methods)
 6. [Incremental Training Strategies](#incremental-training-strategies)
-7. [Model Versioning](#model-versioning)
-8. [Deployment Strategies](#deployment-strategies)
-9. [Production Monitoring](#production-monitoring)
-10. [Model Retirement and Archival](#model-retirement-and-archival)
+7. [Hyperparameter Tuning with NTF Config](#hyperparameter-tuning-with-ntf-config)
+8. [Model Versioning](#model-versioning)
+9. [Deployment Strategies](#deployment-strategies)
+10. [Production Monitoring](#production-monitoring)
+11. [Model Retirement and Archival](#model-retirement-and-archival)
 
 ---
 

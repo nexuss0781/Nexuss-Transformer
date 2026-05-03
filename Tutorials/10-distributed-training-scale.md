@@ -1,7 +1,9 @@
 # Tutorial 10: Distributed Training at Scale
 
 ## Overview
-When models exceed the memory capacity of a single GPU (e.g., Llama-3-70B, Mixtral), or when training time needs to be reduced from months to days, we must distribute the workload across multiple GPUs and nodes. This tutorial covers the three pillars of distributed training: **Data Parallelism**, **Tensor Parallelism**, and **Pipeline Parallelism**, along with **ZeRO** optimization.
+When models exceed the memory capacity of a single GPU (e.g., Llama-3-70B, Mixtral), or when training time needs to be reduced from months to days, we must distribute the workload across multiple GPUs and nodes. This tutorial covers NTF's distributed training capabilities via Accelerate, along with the three pillars of distributed training: **Data Parallelism**, **Tensor Parallelism**, and **Pipeline Parallelism**, along with **ZeRO** optimization.
+
+> **Note**: NTF currently supports multi-GPU training on a single node via Accelerate. Multi-node distributed training is planned for future releases. For large-scale training, consider using external orchestration tools like Kubernetes or cloud provider solutions.
 
 ## Prerequisites
 - Completion of Tutorial 03 (Full Fine-Tuning)
@@ -10,7 +12,62 @@ When models exceed the memory capacity of a single GPU (e.g., Llama-3-70B, Mixtr
 
 ---
 
-## 1. Concepts: The 3D Parallelism Strategy
+## 1. NTF Distributed Training with Accelerate
+
+NTF automatically handles distributed training via Accelerate. Simply configure your training parameters and let NTF manage the complexity.
+
+### Basic Distributed Configuration
+
+```python
+from ntf.config import NTFConfig, TrainingConfig, ModelConfig
+from ntf.finetuning import FullFinetuneTrainer
+
+# NTF automatically handles distributed training via Accelerate
+config = NTFConfig(
+    model=ModelConfig(name="meta-llama/Llama-2-7b-hf"),
+    training=TrainingConfig(
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=4,
+        # Accelerate auto-detects distributed setup
+        fp16=False,
+        bf16=True,
+        gradient_checkpointing=True
+    )
+)
+
+# Trainer automatically uses all available GPUs
+trainer = FullFinetuneTrainer(config=config, train_dataset=train_dataset)
+trainer.train()  # Distributed training handled internally
+```
+
+### Launch Script Example (Single Node Multi-GPU)
+
+```bash
+# Using accelerate launch
+accelerate launch --num_processes=4 train_script.py
+
+# Or with explicit config
+accelerate config  # Interactive setup
+accelerate launch train_script.py
+```
+
+### Checking Your Distributed Setup
+
+```python
+import torch
+from accelerate import Accelerator
+
+accelerator = Accelerator()
+
+print(f"Number of processes: {accelerator.num_processes}")
+print(f"Local process index: {accelerator.local_process_index}")
+print(f"Device: {accelerator.device}")
+print(f"Distributed type: {accelerator.distributed_type}")
+```
+
+---
+
+## 2. Concepts: The 3D Parallelism Strategy
 
 To train massive models, we slice the computation in three dimensions:
 

@@ -1,103 +1,164 @@
-# Tutorial 04: Advanced Fine-Tuning Techniques
+# Tutorial 04: Sequential Domain Adaptation
 
 ## Overview
 
-This tutorial covers advanced fine-tuning techniques that go beyond standard approaches. We'll explore multi-task learning, domain adaptation, instruction tuning, and specialized training strategies used in production environments.
+This tutorial covers sequential domain adaptation strategies for adapting models to multiple domains over time while preventing catastrophic forgetting. We'll explore NTF's `ContinualLearningWrapper` with EWC regularization, incremental training approaches, and best practices for maintaining model performance across domains.
 
 ### What You'll Learn
 
-- Multi-task learning with shared representations
-- Domain adaptation strategies
-- Instruction tuning at scale
-- Contrastive learning for fine-tuning
-- Active learning for data selection
-- Knowledge distillation from larger models
+- Sequential fine-tuning across multiple domains
+- Elastic Weight Consolidation (EWC) for preventing forgetting
+- ContinualLearningWrapper integration with NTF
+- Domain adaptation strategies and evaluation
+- Knowledge preservation techniques
+- Practical workflows for multi-domain scenarios
 
 ---
 
-## Section 1: Multi-Task Learning
+## Section 1: Sequential Domain Adaptation Fundamentals
 
-### Understanding Multi-Task Learning
+### Understanding Sequential Domain Adaptation
 
-Multi-task learning trains a single model on multiple related tasks simultaneously, improving generalization and reducing the need for separate models.
+Sequential domain adaptation involves fine-tuning a model on multiple domains one after another, while preserving knowledge from previous domains. This is crucial when:
+
+- You need to adapt to new domains as they emerge
+- Training data from all domains cannot be loaded simultaneously
+- Privacy or regulatory constraints prevent data mixing
+- Computational resources limit joint training
 
 **Benefits:**
-- Shared representations improve performance on all tasks
-- Reduced infrastructure costs (one model vs many)
-- Better generalization to unseen tasks
-- Efficient use of data across domains
+- Incremental adaptation without full retraining
+- Privacy-preserving (data stays in original domain)
+- Resource efficient (train on one domain at a time)
+- Flexible deployment (add domains as needed)
 
 **Challenges:**
-- Task interference (negative transfer)
-- Balancing task priorities
-- Different data distributions
-- Varying difficulty levels
+- Catastrophic forgetting of previous domains
+- Determining optimal adaptation order
+- Balancing specialization vs. generalization
+- Evaluating cross-domain performance
 
-### Multi-Task Data Format
+### Continual Learning Scenarios
 
-```jsonl
-# data/multitask_dataset.jsonl
-{"task_id": "summarization", "instruction": "Summarize this article", "input": "[Article text]", "output": "[Summary]"}
-{"task_id": "translation", "instruction": "Translate to Spanish", "input": "Hello world", "output": "Hola mundo"}
-{"task_id": "qa", "instruction": "Answer the question", "input": "Context: Paris is the capital of France. Question: What is the capital of France?", "output": "Paris"}
-{"task_id": "sentiment", "instruction": "Classify sentiment", "input": "I love this product!", "output": "Positive"}
-{"task_id": "code", "instruction": "Write Python function", "input": "Calculate fibonacci sequence", "output": "def fib(n):..."}
+```python
+from enum import Enum
+
+class DomainAdaptationScenario(Enum):
+    """Different sequential adaptation scenarios."""
+    
+    TEMPORAL = "temporal"
+    # Domains arrive in temporal order
+    # Example: News from 2020 → 2021 → 2022
+    
+    GEOGRAPHIC = "geographic"  
+    # Different geographic regions
+    # Example: US English → UK English → Australian English
+    
+    TECHNICAL = "technical"
+    # Increasing technical complexity
+    # Example: General → Scientific → Medical → Legal
+    
+    CUSTOMER_SEGMENT = "customer_segment"
+    # Different customer verticals
+    # Example: Retail → Finance → Healthcare → Manufacturing
 ```
 
-### Multi-Task Training Configuration
+---
 
-```yaml
-# configs/multitask_finetune.yaml
-model:
-  name_or_path: "meta-llama/Llama-2-7b-hf"
-  model_type: "causal_lm"
+## Section 2: Using ContinualLearningWrapper with EWC
 
-data:
-  # Multiple datasets for different tasks
-  datasets:
-    - name: "summarization"
-      file: "data/xlsum_train.jsonl"
-      weight: 1.0
-      max_samples: 50000
-    - name: "translation"
-      file: "data/flores_train.jsonl"
-      weight: 1.0
-      max_samples: 50000
-    - name: "qa"
-      file: "data/squad_train.jsonl"
-      weight: 1.5  # Higher weight for QA
-      max_samples: 100000
-    - name: "sentiment"
-      file: "data/imdb_train.jsonl"
-      weight: 0.5
-      max_samples: 25000
-    - name: "code"
-      file: "data/codealpaca_train.jsonl"
-      weight: 1.0
-      max_samples: 50000
-  
-  preprocessing:
-    max_seq_length: 1024
-    pack_sequences: false  # Don't pack for multi-task
+NTF provides the `ContinualLearningWrapper` to simplify sequential domain adaptation with built-in EWC regularization.
 
-training:
-  # Multi-task specific settings
-  task_balancing: "weighted"  # Options: weighted, temperature, gradient_norm
-  
-  # Temperature-based sampling (adjusts during training)
-  temperature_sampling:
-    enabled: true
-    initial_temperature: 1.0
-    annealing_rate: 0.95
-  
-  # Standard training params
-  per_device_train_batch_size: 4
-  gradient_accumulation_steps: 4
-  learning_rate: 2.0e-5
-  num_train_epochs: 3
-  
-  # Gradient checkpointing for memory efficiency
-  gradient_checkpointing: true
+### Basic Setup
+
+```python
+from ntf.utils.continual_learning import ContinualLearningWrapper, EWCConfig
+from ntf.finetuning import FullFinetuneTrainer
+from ntf.config import NTFConfig, ModelConfig, TrainingConfig
+
+# Initialize base model
+config = NTFConfig(
+    model=ModelConfig(name="meta-llama/Llama-2-7b-hf"),
+    training=TrainingConfig(
+        per_device_train_batch_size=4,
+        learning_rate=2e-5,
+        num_train_epochs=3
+    )
+)
+
+model, tokenizer = load_model_and_tokenizer(config.model)
+
+# Wrap with ContinualLearningWrapper
+wrapper = ContinualLearningWrapper(model)
+
+# Configure EWC regularization
+ewc_config = EWCConfig(
+    ewc_lambda=1000.0,      # Strength of EWC regularization
+    fisher_samples=200,      # Samples for Fisher estimation
+    damping=0.1              # Damping factor
+)
+
+wrapper.configure_ewc(ewc_config)
+```
+
+### Sequential Domain Training Workflow
+
+```python
+# Domain 1: Code Generation
+print("=== Training on Domain 1: Code ===")
+code_trainer = FullFinetuneTrainer(
+    model=wrapper.model,
+    train_dataset=code_dataset,
+    config=config
+)
+code_trainer.train()
+
+# Save state after Domain 1
+wrapper.save_state("domain1_code_checkpoint")
+
+# Compute Fisher Information for Domain 1
+wrapper.compute_fisher_information(code_dataloader)
+
+# Domain 2: Math Reasoning (with EWC regularization)
+print("\n=== Training on Domain 2: Math ===")
+wrapper.apply_ewc_regularization(lambda_ewc=500.0)
+
+math_trainer = FullFinetuneTrainer(
+    model=wrapper.model,
+    train_dataset=math_dataset,
+    config=config
+)
+math_trainer.train()
+
+# Save state after Domain 2
+wrapper.save_state("domain2_math_checkpoint")
+
+# Domain 3: Creative Writing
+print("\n=== Training on Domain 3: Creative Writing ===")
+wrapper.apply_ewc_regularization(lambda_ewc=300.0)
+
+writing_trainer = FullFinetuneTrainer(
+    model=wrapper.model,
+    train_dataset=writing_dataset,
+    config=config
+)
+writing_trainer.train()
+
+# Final save
+wrapper.save_state("final_multidomain_checkpoint")
+```
+
+### Advanced: Loading Previous States
+
+```python
+# Option 1: Continue from latest state
+wrapper.load_state("domain2_math_checkpoint")
+wrapper.apply_ewc_regularization(lambda_ewc=400.0)
+
+# Option 2: Branch from earlier state
+wrapper.load_state("domain1_code_checkpoint")
+# Now train on a different domain branch
+```
   fp16: true
   
   # Logging per task
