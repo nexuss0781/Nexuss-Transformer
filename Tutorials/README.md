@@ -8,19 +8,9 @@ Whether you are a beginner looking to understand the basics of transformer archi
 
 ---
 
-## 🌐 Interactive Documentation Viewer
-
-We now provide a modern, dark-mode interactive documentation viewer for a better learning experience!
-
-- **🚀 Live View**: Open `index.html` in your browser to browse tutorials with search, filtering, and a beautiful file tree.
-- **📱 Features**: Real-time search, difficulty filtering (Beginner/Intermediate/Advanced), responsive design, and syntax highlighting.
-- **🌍 Deploy**: Ready to deploy at `Nexuss-Transformer.gt.tc`.
-
----
-
 ## 📚 Tutorial Collection Overview
 
-This series consists of **14 incremental modules**. Each module builds upon the previous one, ensuring a continuous learning path without gaps.
+This series consists of **incremental modules**. Each module builds upon the previous one, ensuring a continuous learning path without gaps.
 
 ### 🏗️ Phase 1: Foundations & Core Training
 *Understand the architecture and execute your first training runs.*
