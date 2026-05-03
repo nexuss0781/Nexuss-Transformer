@@ -398,6 +398,9 @@ def create_training_config(
     }
     precision = precision_map.get(mixed_precision.lower(), Precision.FP32)
     
+    # Auto-detect optimal num_workers if not specified
+    optimal_workers = get_optimal_num_workers(args.num_workers)
+    
     config = TrainingConfig(
         output_dir=output_dir,
         run_name=run_name,
@@ -420,7 +423,7 @@ def create_training_config(
         max_grad_norm=max_grad_norm,
         seed=seed,
         report_to="none",  # Can be changed to 'wandb' or 'tensorboard'
-        dataloader_num_workers=args.num_workers,
+        dataloader_num_workers=optimal_workers,
         dataloader_prefetch_factor=args.prefetch_factor,
         dataloader_pin_memory=True,
     )
@@ -989,12 +992,36 @@ def parse_args():
                         help="Name of the training run")
     
     # Data loading optimization
-    parser.add_argument("--num_workers", type=int, default=4,
-                        help="Number of subprocesses for data loading (default: 4, increase for GPU)")
+    parser.add_argument("--num_workers", type=int, default=None,
+                        help="Number of subprocesses for data loading (default: auto-detect based on CPU cores)")
     parser.add_argument("--prefetch_factor", type=int, default=2,
                         help="Number of batches to prefetch per worker (default: 2)")
     
     return parser.parse_args()
+
+
+def get_optimal_num_workers(user_specified: Optional[int] = None) -> int:
+    """
+    Auto-detect optimal number of workers based on system CPU count.
+    
+    Args:
+        user_specified: User-specified value (if None, auto-detect)
+    
+    Returns:
+        Optimal number of workers
+    """
+    if user_specified is not None:
+        return user_specified
+    
+    import os
+    cpu_count = os.cpu_count() or 2
+    
+    # Use min(cpu_count - 1, 4) but at least 0
+    # Leave 1 CPU free for main process
+    optimal = max(0, min(cpu_count - 1, 4))
+    
+    print(f"💡 Auto-detected {cpu_count} CPU cores → Using {optimal} workers for data loading")
+    return optimal
 
 
 if __name__ == "__main__":
