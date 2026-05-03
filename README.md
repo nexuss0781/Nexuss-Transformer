@@ -2,7 +2,6 @@
 
 > **From Blank Slate to Superintelligence.**  
 > A production-grade, end-to-end framework for training, fine-tuning, and aligning Decoder-Only Large Language Models from scratch.
-> **📚 New: 14 comprehensive tutorials covering end-to-end AI training lifecycle.**
 
 <div align="center">
 
@@ -14,6 +13,8 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github)](https://github.com/nexuss0781/Nexuss-Transformer)
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Tokenizer](#-native-ethiopian-tokenization) • [HuggingFace model](https://huggingface.co/Nexuss0781/Nexuss-Transformer)
+
+**📚 Full documentation available at [Nexuss-Transformer.gt.tc](https://Nexuss-Transformer.gt.tc)**
 
 </div>
 
