@@ -8,12 +8,22 @@ seamlessly with Hugging Face's ecosystem.
 
 import math
 from typing import Optional, Tuple, List, Union, Dict, Any
+import warnings
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from models.config import NTFConfig
+
+# Try to import Flash Attention 2
+try:
+    from flash_attn import flash_attn_func, flash_attn_varlen_func
+    FLASH_ATTENTION_AVAILABLE = True
+except ImportError:
+    FLASH_ATTENTION_AVAILABLE = False
+    flash_attn_func = None
+    flash_attn_varlen_func = None
 
 
 class RotaryEmbedding(nn.Module):
@@ -179,7 +189,7 @@ class FeedForward(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     """
-    Multi-head self-attention with optional sliding window.
+    Multi-head self-attention with optional sliding window and Flash Attention 2 support.
     """
     
     def __init__(self, config: NTFConfig, is_causal: bool = True):
@@ -189,6 +199,25 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = config.n_heads
         self.head_dim = config.head_dim
         self.dropout = config.attention_dropout
+        
+        # Check if Flash Attention can be used
+        # Note: Flash Attention works with RoPE - we apply RoPE before calling flash_attn
+        self.use_flash_attn = (
+            FLASH_ATTENTION_AVAILABLE and 
+            torch.cuda.is_available() and 
+            torch.cuda.get_device_capability()[0] >= 8  # Ampere or newer (A100, RTX 30xx, T4 partially)
+        )
+        
+        # T4 (compute capability 7.5) can use flash-attn but with limitations
+        if torch.cuda.is_available():
+            capability = torch.cuda.get_device_capability()
+            if capability[0] == 7 and capability[1] == 5:  # T4
+                print(f"  ⚠ T4 GPU detected - Flash Attention may have limited support")
+                print(f"  → Using optimized standard attention instead for stability")
+                self.use_flash_attn = False
+        
+        if self.use_flash_attn:
+            print(f"  ✓ Flash Attention 2 enabled for faster training")
         
         # QKV projections
         self.q_proj = nn.Linear(config.d_model, config.d_model, bias=config.bias)
@@ -255,35 +284,51 @@ class MultiHeadAttention(nn.Module):
         if use_cache:
             present_key_value = (k, v)
         
-        # Compute attention scores
-        attn_weights = torch.matmul(q, k.transpose(2, 3)) / math.sqrt(self.head_dim)
-        
-        # Apply causal mask
-        if self.is_causal:
-            causal_mask = torch.triu(
-                torch.ones(seq_len, seq_len, dtype=torch.bool, device=hidden_states.device),
-                diagonal=1,
+        # Use Flash Attention if available and conditions are met
+        if self.use_flash_attn and not self.is_causal and attention_mask is None:
+            # Flash Attention requires specific format: (batch, seq_len, heads, head_dim)
+            q = q.transpose(1, 2).contiguous()
+            k = k.transpose(1, 2).contiguous()
+            v = v.transpose(1, 2).contiguous()
+            
+            # Apply Flash Attention
+            attn_output = flash_attn_func(
+                q, k, v,
+                dropout_p=self.dropout if self.training else 0.0,
+                causal=True,
             )
-            attn_weights.masked_fill_(causal_mask, float("-inf"))
-        
-        # Apply sliding window if configured
-        if self.sliding_window is not None:
-            window_mask = torch.ones_like(attn_weights, dtype=torch.bool)
-            window_mask = torch.triu(window_mask, diagonal=self.sliding_window)
-            attn_weights.masked_fill_(window_mask, float("-inf"))
-        
-        # Apply attention mask if provided
-        if attention_mask is not None:
-            attn_weights = attn_weights + attention_mask
-        
-        # Softmax and dropout
-        attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(q.dtype)
-        attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
-        
-        # Compute output
-        attn_output = torch.matmul(attn_weights, v)
-        attn_output = attn_output.transpose(1, 2).contiguous()
-        attn_output = attn_output.reshape(batch_size, seq_len, self.config.d_model)
+            attn_output = attn_output.reshape(batch_size, seq_len, self.config.d_model)
+        else:
+            # Standard attention implementation
+            # Compute attention scores
+            attn_weights = torch.matmul(q, k.transpose(2, 3)) / math.sqrt(self.head_dim)
+            
+            # Apply causal mask
+            if self.is_causal:
+                causal_mask = torch.triu(
+                    torch.ones(seq_len, seq_len, dtype=torch.bool, device=hidden_states.device),
+                    diagonal=1,
+                )
+                attn_weights.masked_fill_(causal_mask, float("-inf"))
+            
+            # Apply sliding window if configured
+            if self.sliding_window is not None:
+                window_mask = torch.ones_like(attn_weights, dtype=torch.bool)
+                window_mask = torch.triu(window_mask, diagonal=self.sliding_window)
+                attn_weights.masked_fill_(window_mask, float("-inf"))
+            
+            # Apply attention mask if provided
+            if attention_mask is not None:
+                attn_weights = attn_weights + attention_mask
+            
+            # Softmax and dropout
+            attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).to(q.dtype)
+            attn_weights = F.dropout(attn_weights, p=self.dropout, training=self.training)
+            
+            # Compute output
+            attn_output = torch.matmul(attn_weights, v)
+            attn_output = attn_output.transpose(1, 2).contiguous()
+            attn_output = attn_output.reshape(batch_size, seq_len, self.config.d_model)
         
         # Output projection
         output = self.o_proj(attn_output)
