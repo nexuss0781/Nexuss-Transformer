@@ -1,0 +1,77 @@
+# Nexuss Transformer Framework - Continual Learning with EWC
+# Elastic Weight Consolidation to prevent catastrophic forgetting
+
+model:
+  model_name_or_path: "outputs/finetune_lora/checkpoint-5000"
+  
+  vocab_size: 16000
+  hidden_size: 768
+  num_hidden_layers: 12
+  num_attention_heads: 12
+  max_position_embeddings: 2048
+
+data:
+  # New task data
+  train_path: "data/new_task_train.jsonl"
+  val_path: "data/new_task_val.jsonl"
+  
+  # Optional: Replay buffer from previous tasks
+  replay_buffer_path: "data/replay_buffer.jsonl"
+  
+  tokenizer_name: "ethiobbpe"
+  max_length: 1024
+  num_workers: 4
+
+training:
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 8
+  
+  learning_rate: 5e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  lr_scheduler_type: "cosine"
+  max_steps: 3000
+  
+  bf16: true
+
+# EWC Configuration
+continual_learning:
+  method: "ewc"  # ewc, replay, gem, lwf
+  
+  # EWC-specific parameters
+  ewc_lambda: 1000.0      # Importance of EWC loss
+  fisher_estimation_steps: 500  # Steps to estimate Fisher information
+  fisher_update_after: 1000     # Update Fisher matrix after N steps
+  
+  # Experience Replay (if using replay method)
+  replay_buffer_size: 1000
+  replay_strategy: "reservoir"  # reservoir, recent, diverse
+  
+  # GEM (if using gem method)
+  gem_memory_size: 100
+  gem_n_constraints: 10
+  
+  # LwF (if using lwf method)
+  lwf_alpha: 1.0
+  lwf_temperature: 2.0
+
+checkpoint:
+  save_steps: 300
+  save_total_limit: 2
+
+validation:
+  eval_steps: 150
+  eval_strategy: "steps"
+  
+  # Evaluate on both new and old tasks
+  old_task_eval_path: "data/old_task_eval.jsonl"
+
+logging:
+  logging_steps: 25
+  report_to: ["tensorboard", "wandb"]
+  project_name: "nexuss-transformer"
+  run_name: "continual-ewc-v1"
+
+output_dir: "outputs/continual_ewc"
+seed: 42
