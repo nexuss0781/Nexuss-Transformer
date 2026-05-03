@@ -22,7 +22,6 @@ torchvision>=0.16.0
 
 # Optimization
 bitsandbytes>=0.42.0  # For QLoRA
-flash-attn>=2.4.0     # Flash Attention (optional, CUDA required)
 
 # Evaluation
 nltk>=3.8.0
