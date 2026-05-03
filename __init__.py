@@ -3,7 +3,7 @@ Nexuss Transformer Framework (NTF) - Blank Slate Transformer Training System
 
 A comprehensive framework for training decoder-only transformer models from scratch,
 with full support for fine-tuning, RLHF, and continual learning.
-Optimized for Ethiopian languages with EthioBBPE tokenizer integration.
+Optimized for Ethiopian languages with NTFTokenizer (EthioBBPE-based) integration.
 """
 
 from models import (
@@ -30,6 +30,11 @@ from utils import (
     ModelVersioner,
     EvaluationMetrics,
 )
+from tokenizer import (
+    NTFTokenizer,
+    TokenizerOutput,
+    get_ntf_tokenizer,
+)
 
 __version__ = "1.0.0"
 __all__ = [
@@ -52,4 +57,8 @@ __all__ = [
     "ContinualLearner",
     "ModelVersioner",
     "EvaluationMetrics",
+    # Tokenizer
+    "NTFTokenizer",
+    "TokenizerOutput",
+    "get_ntf_tokenizer",
 ]
