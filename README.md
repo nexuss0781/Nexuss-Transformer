@@ -1,4 +1,4 @@
-# 🌌 Nexuss Transformer Framework (NTF) - Complete AI Training Tutorials
+# 🌌 Nexuss Transformer Framework (NTF)
 
 > **From Blank Slate to Superintelligence.**  
 > A production-grade, end-to-end framework for training, fine-tuning, and aligning Decoder-Only Large Language Models from scratch.
@@ -157,7 +157,7 @@ dpo.train(preference_dataset=human_prefs)
 ### 🌐 Interactive Tutorials
 For a step-by-step learning experience, check out our **Interactive Documentation**:
 - **🔗 URL**: Open `Tutorials/index.html` in your browser or visit [Nexuss-Transformer.gt.tc](https://Nexuss-Transformer.gt.tc)
-- **📖 Content**: 14 comprehensive modules from blank slate to production deployment
+- **📖 Content**: comprehensive modules from blank slate to production deployment
 - **✨ Features**: Search, filtering by difficulty, dark mode, and syntax highlighting
 
 ### 📄 Technical Documentation
