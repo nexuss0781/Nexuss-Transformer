@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexuss AI Tutorials - End-to-End LLM Training Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --text-primary: #e8e8ed;
+            --text-secondary: #a8a8b3;
+            --text-muted: #6b6b7b;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --border-color: #2a2a3a;
+            --code-bg: #1e1e28;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .gradient-orb:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            top: -100px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .gradient-orb:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            bottom: -50px;
+            left: -50px;
+            animation-delay: -7s;
+        }
+
+        .gradient-orb:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #06b6d4, var(--accent-primary));
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -30px) scale(1.05); }
+            50% { transform: translate(-15px, 20px) scale(0.95); }
+            75% { transform: translate(25px, 15px) scale(1.02); }
+        }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tree Navigation */
+        .tree-nav {
+            padding: 0 1rem;
+        }
+
+        .tree-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .tree-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .tree-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .tree-link.active {
+            background: var(--accent-glow);
+            color: var(--text-primary);
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .tree-icon {
+            margin-right: 0.75rem;
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .tree-label {
+            flex: 1;
+        }
+
+        .tree-level {
+            margin-left: 1.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 300px;
+            padding: 3rem 4rem;
+            max-width: 1200px;
+        }
+
+        /* Content Focus Styling */
+        .content-wrapper {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        ul, ol {
+            margin-bottom: 1.25rem;
+            margin-left: 2rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+        }
+
+        /* Code Blocks - Optimized for Reading */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: var(--text-primary);
+        }
+
+        :not(pre) > code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: var(--accent-primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--accent-primary);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            background: var(--bg-tertiary);
+            border-radius: 0 8px 8px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-glow);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nav-btn.prev::before {
+            content: '←';
+            font-size: 1.25rem;
+        }
+
+        .nav-btn.next::after {
+            content: '→';
+            font-size: 1.25rem;
+        }
+
+        .nav-info {
+            text-align: center;
+        }
+
+        .nav-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+
+        .toc-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc-list a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .toc-list a:hover {
+            color: var(--accent-primary);
+        }
+
+        .toc-list .toc-h3 {
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Callouts */
+        .callout {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .callout-note {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .callout-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+        }
+
+        .callout-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .callout-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 260px;
+            }
+            .main-content {
+                margin-left: 260px;
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .number { color: #d19a66; }
+        .comment { color: #5c6370; font-style: italic; }
+        .function { color: #61afef; }
+        .class { color: #e5c07b; }
+        .operator { color: #56b6c2; }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="background-effects">
+        <div class="gradient-orb"></div>
+        <div class="gradient-orb"></div>
+        <div class="gradient-orb"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Nexuss AI</div>
+                <div class="tagline">Complete LLM Training Guide</div>
+            </div>
+            
+            <nav class="tree-nav" id="treeNav">
+                <!-- Tree items will be populated by JavaScript -->
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="content-wrapper" id="contentWrapper">
+                <!-- Content will be loaded here -->
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons" id="navButtons">
+                <a href="#" class="nav-btn prev disabled" id="prevBtn">
+                    <span class="nav-info">
+                        <div class="nav-label">Previous</div>
+                        <div class="nav-title" id="prevTitle">Start</div>
+                    </span>
+                </a>
+                <a href="#" class="nav-btn next" id="nextBtn">
+                    <span class="nav-info">
+                        <div class="nav-label">Next</div>
+                        <div class="nav-title" id="nextTitle">Blank Slate Basics</div>
+                    </span>
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Tutorial configuration
+        const tutorials = [
+            {
+                id: 'blank-slate-basics',
+                title: 'Blank Slate Basics',
+                file: 'blank-slate-basics.md',
+                icon: '🌱',
+                level: 'Beginner'
+            },
+            {
+                id: 'first-training-run',
+                title: 'First Training Run',
+                file: 'first-training-run.md',
+                icon: '🚀',
+                level: 'Intermediate'
+            },
+            {
+                id: 'peft-lora',
+                title: 'PEFT and LoRA',
+                file: 'peft-lora.md',
+                icon: '⚡',
+                level: 'Intermediate'
+            },
+            {
+                id: 'versioning-release',
+                title: 'Versioning and Release',
+                file: 'versioning-release.md',
+                icon: '📦',
+                level: 'Advanced'
+            },
+            {
+                id: 'continual-learning',
+                title: 'Continual Learning',
+                file: 'continual-learning.md',
+                icon: '🔄',
+                level: 'Advanced'
+            },
+            {
+                id: 'scaling-production',
+                title: 'Scaling to Production',
+                file: 'scaling-production.md',
+                icon: '🏗️',
+                level: 'Advanced'
+            }
+        ];
+
+        let currentIndex = 0;
+
+        // Build tree navigation
+        function buildTreeNav() {
+            const nav = document.getElementById('treeNav');
+            nav.innerHTML = '';
+
+            tutorials.forEach((tutorial, index) => {
+                const treeItem = document.createElement('div');
+                treeItem.className = 'tree-item';
+                
+                const link = document.createElement('a');
+                link.className = `tree-link ${index === currentIndex ? 'active' : ''}`;
+                link.href = `#${tutorial.id}`;
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    loadTutorial(index);
+                };
+
+                link.innerHTML = `
+                    <span class="tree-icon">${tutorial.icon}</span>
+                    <span class="tree-label">${tutorial.title}</span>
+                `;
+
+                treeItem.appendChild(link);
+                nav.appendChild(treeItem);
+            });
+        }
+
+        // Simple Markdown parser
+        function parseMarkdown(md) {
+            let html = md;
+
+            // Headers
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+            // Bold and Italic
+            html = html.replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>');
+            html = html.replace(/\*(.*)\*/gim, '<em>$1</em>');
+
+            // Code blocks
+            html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, (match, lang, code) => {
+                return `<pre><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`;
+            });
+
+            // Inline code
+            html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>');
+
+            // Images
+            html = html.replace(/!\[([^\]]+)\]\(([^)]+)\)/gim, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin: 1rem 0;">');
+
+            // Lists
+            html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>');
+            html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li>$1</li>');
+
+            // Paragraphs (simple approach)
+            html = html.replace(/\n\n/gim, '</p><p>');
+            html = '<p>' + html + '</p>';
+
+            // Clean up empty paragraphs and fix structure
+            html = html.replace(/<p>\s*<(h[1-6]|ul|ol|pre|table|blockquote)/gim, '<$1');
+            html = html.replace(/<\/(h[1-6]|ul|ol|pre|table|blockquote)>\s*<\/p>/gim, '</$1>');
+            html = html.replace(/<p><\/p>/gim, '');
+
+            // Tables (basic support)
+            html = html.replace(/\|(.+)\|\n\|([-:\s|]+)\n((?:\|.+\|\n?)+)/gim, (match, header, separator, rows) => {
+                const headers = header.split('|').map(h => `<th>${h.trim()}</th>`).join('');
+                const rowHtml = rows.split('\n').filter(r => r.trim()).map(row => {
+                    const cells = row.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1);
+                    return `<tr>${cells.map(c => `<td>${c.trim()}</td>`).join('')}</tr>`;
+                }).join('');
+                return `<table><thead><tr>${headers}</tr></thead><tbody>${rowHtml}</tbody></table>`;
+            });
+
+            // Blockquotes
+            html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load tutorial content
+        async function loadTutorial(index) {
+            currentIndex = index;
+            buildTreeNav();
+            updateNavButtons();
+
+            const contentWrapper = document.getElementById('contentWrapper');
+            contentWrapper.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(tutorials[index].file);
+                const markdown = await response.text();
+                const html = parseMarkdown(markdown);
+                contentWrapper.innerHTML = html;
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                contentWrapper.innerHTML = `
+                    <div style="color: var(--error); padding: 2rem; text-align: center;">
+                        <h2>Error Loading Tutorial</h2>
+                        <p>Failed to load ${tutorials[index].title}. Please try again.</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update navigation buttons
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const prevTitle = document.getElementById('prevTitle');
+            const nextTitle = document.getElementById('nextTitle');
+
+            if (currentIndex > 0) {
+                prevBtn.classList.remove('disabled');
+                prevBtn.onclick = (e) => {
+                    e.preventDefault();
+                    loadTutorial(currentIndex - 1);
+                };
+                prevTitle.textContent = tutorials[currentIndex - 1].title;
+            } else {
+                prevBtn.classList.add('disabled');
+                prevBtn.onclick = (e) => e.preventDefault();
+                prevTitle.textContent = 'Start';
+            }
+
+            if (currentIndex < tutorials.length - 1) {
+                nextBtn.classList.remove('disabled');
+                nextBtn.onclick = (e) => {
+                    e.preventDefault();
+                    loadTutorial(currentIndex + 1);
+                };
+                nextTitle.textContent = tutorials[currentIndex + 1].title;
+            } else {
+                nextBtn.classList.add('disabled');
+                nextBtn.onclick = (e) => e.preventDefault();
+                nextTitle.textContent = 'Complete';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            buildTreeNav();
+            loadTutorial(0);
+        });
+
+        // Handle hash changes for direct linking
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.slice(1);
+            const index = tutorials.findIndex(t => t.id === hash);
+            if (index !== -1) {
+                loadTutorial(index);
+            }
+        });
+    </script>
+</body>
+</html>
