@@ -121,6 +121,7 @@ class TrainingConfig:
     # Distributed training
     ddp_find_unused_parameters: bool = False
     dataloader_num_workers: int = 0
+    dataloader_prefetch_factor: Optional[int] = None
     dataloader_pin_memory: bool = True
     
     # Regularization
