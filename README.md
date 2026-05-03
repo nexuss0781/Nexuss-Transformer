@@ -1,7 +1,8 @@
-# 🌌 Nexuss Transformer Framework (NTF)
+# 🌌 Nexuss Transformer Framework (NTF) - Complete AI Training Tutorials
 
 > **From Blank Slate to Superintelligence.**  
 > A production-grade, end-to-end framework for training, fine-tuning, and aligning Decoder-Only Large Language Models from scratch.
+> **📚 New: 14 comprehensive tutorials covering end-to-end AI training lifecycle.**
 
 <div align="center">
 
@@ -154,15 +155,9 @@ dpo.train(preference_dataset=human_prefs)
 
 ### 🌐 Interactive Tutorials
 For a step-by-step learning experience, check out our **Interactive Documentation**:
-- **🔗 URL**: Open `Tutorials/index.html` in your browser or visit [Nexuss-Transformer.gt.tc](https://nexuss-ai.com)
+- **🔗 URL**: Open `Tutorials/index.html` in your browser or visit [Nexuss-Transformer.gt.tc](https://Nexuss-Transformer.gt.tc)
 - **📖 Content**: 14 comprehensive modules from blank slate to production deployment
 - **✨ Features**: Search, filtering by difficulty, dark mode, and syntax highlighting
-
-```bash
-# Launch Local Tutorial Viewer
-python -m http.server 8000 --directory Tutorials/
-# Open: http://localhost:8000/index.html
-```
 
 ### 📄 Technical Documentation
 | Module | Description |
@@ -185,8 +180,8 @@ graph TD
     B --> C{Training Mode}
     
     C -->|Blank Slate| D[Pre-Training Loop]
-    C -->|Adaptation| E[Fine-Tuning (Full/LoRA)]
-    C -->|Alignment| F[RLHF (PPO/DPO)]
+    C -->|Adaptation| E[Fine-Tuning Full/LoRA]
+    C -->|Alignment| F[RLHF PPO/DPO]
     
     D --> G[Base Model Weights]
     E --> G
@@ -200,7 +195,7 @@ graph TD
     
     subgraph Optimization
     L[Gradient Checkpointing]
-    M[Mixed Precision (FP16/BF16)]
+    M[Mixed Precision FP16/BF16]
     N[DeepSpeed ZeRO]
     end
     

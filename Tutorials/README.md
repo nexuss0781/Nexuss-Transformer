@@ -1,5 +1,7 @@
 # 🚀 Nexuss AI: Complete End-to-End Model Training & Deployment Guide
 
+**📚 New: Interactive dark-mode documentation viewer available at [Nexuss-Transformer.gt.tc](https://Nexuss-Transformer.gt.tc)**
+
 Welcome to the **Nexuss AI Engineering Handbook**. This is a comprehensive, incremental, and practical tutorial series designed to take you from a blank slate to production-scale AI systems.
 
 Whether you are a beginner looking to understand the basics of transformer architecture or a senior engineer optimizing distributed training clusters, this guide covers the entire lifecycle of modern Large Language Model (LLM) development.
@@ -13,12 +15,6 @@ We now provide a modern, dark-mode interactive documentation viewer for a better
 - **🚀 Live View**: Open `index.html` in your browser to browse tutorials with search, filtering, and a beautiful file tree.
 - **📱 Features**: Real-time search, difficulty filtering (Beginner/Intermediate/Advanced), responsive design, and syntax highlighting.
 - **🌍 Deploy**: Ready to deploy at `Nexuss-Transformer.gt.tc`.
-
-```bash
-# Quick Local Preview
-python -m http.server 8000 --directory Tutorials/
-# Then open: http://localhost:8000/index.html
-```
 
 ---
 
