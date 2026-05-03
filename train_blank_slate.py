@@ -357,6 +357,7 @@ def create_training_config(
     gradient_accumulation: int = 2,
     learning_rate: float = 1e-3,
     warmup_ratio: float = 0.05,
+    warmup_steps: Optional[int] = None,
     weight_decay: float = 0.01,
     max_grad_norm: float = 1.0,
     save_steps: int = 100,
@@ -376,6 +377,7 @@ def create_training_config(
         gradient_accumulation: Gradient accumulation steps
         learning_rate: Peak learning rate
         warmup_ratio: Warmup ratio
+        warmup_steps: Number of warmup steps (overrides warmup_ratio if specified)
         weight_decay: Weight decay
         max_grad_norm: Maximum gradient norm
         save_steps: Save checkpoint every N steps
@@ -407,6 +409,7 @@ def create_training_config(
         optimizer=OptimizerType.ADAMW,
         scheduler=SchedulerType.LINEAR,
         warmup_ratio=warmup_ratio,
+        warmup_steps=warmup_steps,
         mixed_precision=precision,
         gradient_checkpointing=gradient_checkpointing,
         save_steps=save_steps,
@@ -538,6 +541,15 @@ def main(args):
     else:
         vocab_size = tokenizer.get_vocab_size()
     
+    # Handle max_seq_length alias
+    if args.max_seq_length is not None:
+        args.max_seq_len = args.max_seq_length
+    
+    # Handle warmup_steps vs warmup_ratio
+    if args.warmup_steps is not None:
+        # warmup_steps takes precedence, will be converted to ratio later
+        pass
+    
     # =====================
     # Create Model
     # =====================
@@ -656,6 +668,7 @@ def main(args):
         gradient_accumulation=args.gradient_accumulation,
         learning_rate=args.learning_rate,
         warmup_ratio=args.warmup_ratio,
+        warmup_steps=args.warmup_steps,
         weight_decay=args.weight_decay,
         max_grad_norm=args.max_grad_norm,
         save_steps=args.save_steps,
@@ -881,7 +894,9 @@ def parse_args():
                         choices=["small", "medium", "large"],
                         help="Model size preset")
     parser.add_argument("--max_seq_len", type=int, default=512,
-                        help="Maximum sequence length")
+                        help="Maximum sequence length (alias: --max_seq_length)")
+    parser.add_argument("--max_seq_length", type=int, default=None,
+                        help="Maximum sequence length (alias for --max_seq_len)")
     parser.add_argument("--no_rope", action="store_true",
                         help="Disable Rotary Positional Embeddings")
     parser.add_argument("--no_swiglu", action="store_true",
@@ -903,7 +918,9 @@ def parse_args():
     parser.add_argument("--learning_rate", type=float, default=1e-3,
                         help="Peak learning rate")
     parser.add_argument("--warmup_ratio", type=float, default=0.05,
-                        help="Warmup ratio")
+                        help="Warmup ratio (fraction of total steps)")
+    parser.add_argument("--warmup_steps", type=int, default=None,
+                        help="Number of warmup steps (overrides warmup_ratio if specified)")
     parser.add_argument("--weight_decay", type=float, default=0.01,
                         help="Weight decay")
     parser.add_argument("--max_grad_norm", type=float, default=1.0,
