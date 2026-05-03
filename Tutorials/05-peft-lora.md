@@ -6,10 +6,10 @@ Welcome to one of the most important techniques in modern LLM training! **Parame
 
 By the end of this tutorial, you will:
 - Understand why PEFT matters
-- Master LoRA (Low-Rank Adaptation)
-- Implement QLoRA for memory efficiency
+- Master LoRA (Low-Rank Adaptation), AdaLoRA, and LoHa
+- Use NTF's unified `PEFTTrainer` interface
 - Know when to use different PEFT methods
-- Apply PEFT to your models
+- Apply PEFT to your models with configuration-driven setup
 
 ---
 
@@ -100,131 +100,118 @@ For a weight matrix `W ∈ ℝ^(d×d)`:
 
 ---
 
-## LoRA Configuration
+## Using NTF's PEFTTrainer
 
-### Basic LoRAConfig
+### Configuration-Driven PEFT Setup
+
+NTF provides a unified interface for all PEFT methods through `PEFTTrainer` and configuration classes:
 
 ```python
-from finetuning.peft_finetune import LoRAConfig, PEFTTrainer
+from ntf.config import NTFConfig, PEFTConfig, ModelConfig, TrainingConfig
+from ntf.models import ModelRegistry
+from ntf.finetuning import PEFTTrainer
 
-config = LoRAConfig(
-    # Core parameters
-    r=8,                    # Rank (smaller = fewer params)
-    alpha=16,               # Scaling factor
-    dropout=0.05,           # LoRA dropout
-    
-    # Target modules (which layers to adapt)
-    target_modules=["q_proj", "v_proj"],
-    
-    # Training options
-    bias="none",            # Don't train bias
-    task_type="CAUSAL_LM",  # Causal language modeling
-    
-    # Advanced
-    modules_to_save=None,   # Additional modules to fully train
-    init_lora_weights=True, # Initialize LoRA weights
+# Configuration-driven PEFT
+config = NTFConfig(
+    model=ModelConfig(name="meta-llama/Llama-2-7b-hf"),
+    peft=PEFTConfig(
+        method="lora",  # or "adalora", "loha"
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.1,
+        target_modules=["q_proj", "v_proj"],
+        bias="none",
+        task_type="CAUSAL_LM"
+    ),
+    training=TrainingConfig(
+        output_dir="./outputs/lora-finetuned",
+        num_train_epochs=5,
+        per_device_train_batch_size=4,
+        learning_rate=1e-4,
+    )
 )
 
-print(f"Scaling factor: {config.scaling}")  # alpha / r = 2.0
+# Load model with registry
+registry = ModelRegistry(config.model)
+model, tokenizer = registry.load_model_and_tokenizer()
+
+# Apply PEFT adapters
+adapter_config = registry.apply_peft_adapters(config.peft)
+
+# Use PEFTTrainer with built-in adapter handling
+trainer = PEFTTrainer(
+    model=model,
+    adapter_config=adapter_config,
+    training_config=config.training,
+    train_dataset=train_dataset,
+    tokenizer=tokenizer
+)
+
+trainer.train()
+
+# Save only adapter weights (small footprint)
+registry.save_adapter(adapter_config, output_dir="./lora_adapter", version="1.0.0")
+
+# Later: Load adapter for inference
+registry.load_adapter(model, adapter_path="./lora_adapter")
 ```
 
-### Pre-built Configurations
+### PEFT Methods Comparison
+
+| Method | NTF Support | Best For |
+|--------|-------------|----------|
+| LoRA | ✅ Full | General purpose fine-tuning |
+| AdaLoRA | ✅ Full | Dynamic rank allocation |
+| LoHa | ✅ Full | Complex tasks requiring capacity |
+| Prefix Tuning | ⚠️ Partial | Task-specific prompts |
+| P-Tuning | ❌ Not implemented | - |
+
+### PEFTConfig Options
 
 ```python
-# Default: Good starting point
-config = LoRAConfig.default()
-# r=16, alpha=32, targets=["q_proj", "v_proj"]
+from ntf.config import PEFTConfig
 
-# Full attention: More expressive
-config = LoRAConfig.full_attention()
-# Targets all attention projections
-
-# Full model: Maximum flexibility
-config = LoRAConfig.full_model()
-# Targets all linear layers (more params)
-```
-
-### Choosing Rank (r)
-
-| Rank | Params | Use Case | Quality |
-|------|--------|----------|---------|
-| 4    | Minimal | Simple tasks, very limited VRAM | Baseline |
-| 8    | Low     | Standard fine-tuning | Good |
-| 16   | Medium  | Complex tasks, good VRAM | Better |
-| 32   | High    | Very complex, ample VRAM | Best |
-| 64+  | Very High | Research, specialized domains | Marginal gains |
-
-**Rule of thumb**: Start with r=8 or r=16, increase only if needed.
-
----
-
-## Applying LoRA to Your Model
-
-### Step-by-Step Implementation
-
-```python
-import torch
-from models.transformer import NexussTransformer
-from models.config import NTFConfig
-from finetuning.peft_finetune import PEFTTrainer, LoRAConfig
-
-# 1. Load pre-trained base model
-base_model = NexussTransformer.from_pretrained("./outputs/pretrained")
-base_model.eval()  # Ensure frozen
-
-# 2. Configure LoRA
-lora_config = LoRAConfig(
-    r=16,
-    alpha=32,
-    dropout=0.05,
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+# LoRA Configuration
+lora_config = PEFTConfig(
+    method="lora",
+    r=16,                    # Rank
+    lora_alpha=32,           # Scaling factor
+    lora_dropout=0.1,        # Dropout
+    target_modules=["q_proj", "v_proj"],
+    bias="none",
     task_type="CAUSAL_LM",
 )
 
-# 3. Wrap with PEFT trainer (applies LoRA)
-peft_trainer = PEFTTrainer(
-    model=base_model,
-    config=lora_config,
-    tokenizer=tokenizer,
+# AdaLoRA Configuration (dynamic rank allocation)
+adalora_config = PEFTConfig(
+    method="adalora",
+    init_r=12,               # Initial rank
+    target_r=8,              # Target rank after pruning
+    tinit=200,               # Steps before pruning starts
+    tfinal=2000,             # Steps when pruning ends
+    deltaT=10,               # Pruning interval
+    target_modules=["q_proj", "v_proj"],
 )
 
-# Get the wrapped model
-model = peft_trainer.get_model()
-
-# 4. Verify trainable parameters
-peft_trainer.print_trainable_parameters()
-# Output example:
-# Trainable params: 2,457,600 (0.42%)
-# All params: 589,824,000
-# Frozen params: 587,366,400
-```
-
-### What Gets Trained?
-
-```python
-# Inspect which parameters are trainable
-for name, param in model.named_parameters():
-    if param.requires_grad:
-        print(f"{name}: {param.shape}")
-
-# Typical output:
-# base_model.model.layers.0.self_attn.q_proj.lora_A.weight: [8, 768]
-# base_model.model.layers.0.self_attn.q_proj.lora_B.weight: [768, 8]
-# base_model.model.layers.0.self_attn.v_proj.lora_A.weight: [8, 768]
-# base_model.model.layers.0.self_attn.v_proj.lora_B.weight: [768, 8]
-# ... (repeated for each layer and target module)
+# LoHa Configuration (Hadamard product)
+loha_config = PEFTConfig(
+    method="loha",
+    r=8,
+    alpha=16,
+    target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
+)
 ```
 
 ---
 
 ## Training with LoRA
 
-### Complete Training Script
+### Complete Training Script with PEFTTrainer
 
 ```python
 #!/usr/bin/env python3
 """
-LoRA Fine-Tuning Example
+LoRA Fine-Tuning Example using NTF's PEFTTrainer
 Adapt a pre-trained model with minimal parameters.
 """
 
@@ -232,10 +219,9 @@ import torch
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 
-from models.transformer import NexussTransformer
-from training.trainer import Trainer
-from training.config import TrainingConfig
-from finetuning.peft_finetune import PEFTTrainer, LoRAConfig
+from ntf.config import NTFConfig, PEFTConfig, ModelConfig, TrainingConfig
+from ntf.models import ModelRegistry
+from ntf.finetuning import PEFTTrainer
 
 
 class InstructionDataset(Dataset):
@@ -283,72 +269,73 @@ class InstructionDataset(Dataset):
 
 def main():
     print("=" * 60)
-    print("LORA FINE-TUNING")
+    print("LORA FINE-TUNING WITH PEFTTRAINER")
     print("=" * 60)
     
-    # 1. Load base model
-    print("\n1. Loading pre-trained base model...")
-    base_model = NexussTransformer.from_pretrained("./outputs/pretrained")
-    
-    # 2. Apply LoRA
-    print("\n2. Applying LoRA adapters...")
-    lora_config = LoRAConfig(
-        r=16,
-        alpha=32,
-        dropout=0.05,
-        target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
-        task_type="CAUSAL_LM",
+    # 1. Configuration-driven setup
+    print("\n1. Creating NTF configuration...")
+    config = NTFConfig(
+        model=ModelConfig(name="meta-llama/Llama-2-7b-hf"),
+        peft=PEFTConfig(
+            method="lora",
+            r=16,
+            lora_alpha=32,
+            lora_dropout=0.05,
+            target_modules=["q_proj", "v_proj", "k_proj", "o_proj"],
+            bias="none",
+            task_type="CAUSAL_LM",
+        ),
+        training=TrainingConfig(
+            output_dir="./outputs/lora-finetuned",
+            num_train_epochs=5,
+            per_device_train_batch_size=4,
+            gradient_accumulation_steps=4,
+            learning_rate=1e-4,
+            warmup_ratio=0.05,
+            logging_steps=10,
+            save_steps=100,
+            weight_decay=0.01,
+        )
     )
     
-    peft_wrapper = PEFTTrainer(
-        model=base_model,
-        config=lora_config,
-    )
+    # 2. Load model with registry
+    print("\n2. Loading pre-trained base model...")
+    registry = ModelRegistry(config.model)
+    model, tokenizer = registry.load_model_and_tokenizer()
     
-    model = peft_wrapper.get_model()
-    
-    # 3. Training config (lower LR for fine-tuning)
-    print("\n3. Setting up training configuration...")
-    train_config = TrainingConfig(
-        output_dir="./outputs/lora-finetuned",
-        num_train_epochs=5,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
-        learning_rate=1e-4,  # Lower than pre-training
-        warmup_ratio=0.05,
-        logging_steps=10,
-        save_steps=100,
-        weight_decay=0.01,
-    )
+    # 3. Apply PEFT adapters
+    print("\n3. Applying LoRA adapters...")
+    adapter_config = registry.apply_peft_adapters(config.peft)
     
     # 4. Dataset
     print("\n4. Loading instruction dataset...")
-    tokenizer = AutoTokenizer.from_pretrained("gpt2")
     train_dataset = InstructionDataset(
         data_path="data/instructions.jsonl",
         tokenizer=tokenizer,
         max_length=512,
     )
     
-    # 5. Trainer
-    print("\n5. Initializing trainer...")
-    trainer = Trainer(
+    # 5. Use PEFTTrainer with built-in adapter handling
+    print("\n5. Initializing PEFTTrainer...")
+    trainer = PEFTTrainer(
         model=model,
-        config=train_config,
+        adapter_config=adapter_config,
+        training_config=config.training,
         train_dataset=train_dataset,
+        tokenizer=tokenizer
     )
     
     # 6. Train
     print("\n6. Starting LoRA fine-tuning...")
-    metrics = trainer.train()
+    trainer.train()
     
-    # 7. Save adapter only
+    # 7. Save only adapter weights (small footprint)
     print("\n7. Saving LoRA adapter...")
-    peft_wrapper.save_adapter("./outputs/lora-adapter")
+    registry.save_adapter(adapter_config, output_dir="./outputs/lora-adapter", version="1.0.0")
     
     print("\n" + "=" * 60)
     print("SUCCESS!")
-    print(f"Base model: ./outputs/pretrained")
+    print(f"Base model: {config.model.name}")
     print(f"LoRA adapter: ./outputs/lora-adapter")
     print("=" * 60)
 
@@ -383,11 +370,13 @@ QLoRA:
 | LoRA    | 16-24 GB | 32-48 GB |
 | QLoRA   | 8-12 GB | 16-24 GB |
 
-### Using QLoRA
+### Using QLoRA with PEFTConfig
 
 ```python
+from ntf.config import NTFConfig, PEFTConfig, ModelConfig, TrainingConfig
+from ntf.models import ModelRegistry
+from ntf.finetuning import PEFTTrainer
 from transformers import BitsAndBytesConfig
-from peft import prepare_model_for_kbit_training
 
 # 1. Configure 4-bit quantization
 bnb_config = BitsAndBytesConfig(
@@ -397,20 +386,38 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_use_double_quant=True,  # Double quantization
 )
 
-# 2. Load model in 4-bit
-model = NexussTransformer.from_pretrained(
-    "./outputs/pretrained",
-    quantization_config=bnb_config,
+# 2. Create NTF config with quantization support
+config = NTFConfig(
+    model=ModelConfig(
+        name="meta-llama/Llama-2-7b-hf",
+        quantization_config=bnb_config,  # Pass quantization config
+    ),
+    peft=PEFTConfig(
+        method="lora",
+        r=16,
+        lora_alpha=32,
+        target_modules=["q_proj", "v_proj"],
+    ),
+    training=TrainingConfig(...)
 )
 
-# 3. Prepare for k-bit training
-model = prepare_model_for_kbit_training(model)
+# 3. Load model with registry (automatically handles quantization)
+registry = ModelRegistry(config.model)
+model, tokenizer = registry.load_model_and_tokenizer()
 
-# 4. Apply LoRA (same as before)
-lora_config = LoRAConfig(r=16, alpha=32, ...)
-peft_wrapper = PEFTTrainer(model=model, config=lora_config)
+# 4. Apply PEFT adapters
+adapter_config = registry.apply_peft_adapters(config.peft)
 
-# Now train with much less memory!
+# 5. Use PEFTTrainer - automatically prepared for k-bit training
+trainer = PEFTTrainer(
+    model=model,
+    adapter_config=adapter_config,
+    training_config=config.training,
+    train_dataset=train_dataset,
+    tokenizer=tokenizer
+)
+
+trainer.train()
 ```
 
 ---
@@ -422,24 +429,38 @@ peft_wrapper = PEFTTrainer(model=model, config=lora_config)
 Which modules should you adapt?
 
 ```python
+from ntf.config import PEFTConfig
+
 # Minimal (fastest, least expressive)
-target_modules = ["q_proj", "v_proj"]
+lora_config = PEFTConfig(
+    method="lora",
+    target_modules=["q_proj", "v_proj"],
+)
 
 # Standard (good balance)
-target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
+lora_config = PEFTConfig(
+    method="lora",
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+)
 
 # Full attention (more expressive)
-target_modules = [
-    "q_proj", "k_proj", "v_proj", "o_proj",
-    "attn_out"
-]
+lora_config = PEFTConfig(
+    method="lora",
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "attn_out"
+    ],
+)
 
 # Full model (most expressive, more params)
-target_modules = [
-    "q_proj", "k_proj", "v_proj", "o_proj",
-    "gate_proj", "up_proj", "down_proj",  # FFN
-    "lm_head",  # Output layer
-]
+lora_config = PEFTConfig(
+    method="lora",
+    target_modules=[
+        "q_proj", "k_proj", "v_proj", "o_proj",
+        "gate_proj", "up_proj", "down_proj",  # FFN
+        "lm_head",  # Output layer
+    ],
+)
 ```
 
 ### 2. LoRA + Full Layers
@@ -447,9 +468,12 @@ target_modules = [
 Train some modules fully while using LoRA for others:
 
 ```python
-lora_config = LoRAConfig(
+from ntf.config import PEFTConfig
+
+lora_config = PEFTConfig(
+    method="lora",
     r=16,
-    alpha=32,
+    lora_alpha=32,
     target_modules=["q_proj", "v_proj"],
     modules_to_save=["lm_head", "norm"],  # Fully train these
 )
@@ -460,12 +484,15 @@ lora_config = LoRAConfig(
 Prevent overfitting with dropout:
 
 ```python
-lora_config = LoRAConfig(
+from ntf.config import PEFTConfig
+
+lora_config = PEFTConfig(
+    method="lora",
     r=16,
-    alpha=32,
-    dropout=0.05,  # Standard
-    # dropout=0.1,  # More regularization
-    # dropout=0.0,  # No regularization (risk of overfitting)
+    lora_alpha=32,
+    lora_dropout=0.05,  # Standard
+    # lora_dropout=0.1,  # More regularization
+    # lora_dropout=0.0,  # No regularization (risk of overfitting)
 )
 ```
 
@@ -474,12 +501,14 @@ lora_config = LoRAConfig(
 The effective update is scaled by `alpha / r`:
 
 ```python
-# Equivalent updates:
-LoRA(r=8, alpha=16)   # Scale = 2.0
-LoRA(r=16, alpha=32)  # Scale = 2.0
-LoRA(r=32, alpha=64)  # Scale = 2.0
+from ntf.config import PEFTConfig
 
-# Common practice: alpha = 2 * r
+# Equivalent updates:
+PEFTConfig(method="lora", r=8, lora_alpha=16)   # Scale = 2.0
+PEFTConfig(method="lora", r=16, lora_alpha=32)  # Scale = 2.0
+PEFTConfig(method="lora", r=32, lora_alpha=64)  # Scale = 2.0
+
+# Common practice: lora_alpha = 2 * r
 ```
 
 ---
@@ -491,8 +520,11 @@ LoRA(r=32, alpha=64)  # Scale = 2.0
 After training, merge adapters for inference:
 
 ```python
-# Method 1: Merge and unload
-merged_model = peft_wrapper.merge_and_unload()
+from ntf.models import ModelRegistry
+
+# Method 1: Use registry to merge and save
+registry = ModelRegistry(config.model)
+merged_model = registry.merge_adapter(model, adapter_config)
 
 # Save merged model
 merged_model.save_pretrained("./outputs/merged-model")
@@ -505,14 +537,18 @@ merged_model.save_pretrained("./outputs/merged-model")
 For multi-task scenarios, keep adapters separate:
 
 ```python
+from ntf.models import ModelRegistry
+
+registry = ModelRegistry(config.model)
+
 # Save only the adapter (tiny!)
-peft_wrapper.save_adapter("./outputs/task1-adapter")
+registry.save_adapter(adapter_config, output_dir="./outputs/task1-adapter", version="1.0.0")
 
 # Later, load different adapters for different tasks
-peft_wrapper.load_adapter("./outputs/task1-adapter")
+registry.load_adapter(model, adapter_path="./outputs/task1-adapter")
 # Generate for task 1
 
-peft_wrapper.load_adapter("./outputs/task2-adapter")
+registry.load_adapter(model, adapter_path="./outputs/task2-adapter")
 # Generate for task 2
 
 # Same base model, different behaviors!
@@ -523,32 +559,52 @@ peft_wrapper.load_adapter("./outputs/task2-adapter")
 ## Multi-Task Learning with LoRA
 
 ```python
+from ntf.config import NTFConfig, PEFTConfig, ModelConfig, TrainingConfig
+from ntf.models import ModelRegistry
+from ntf.finetuning import PEFTTrainer
+
 # Train separate adapters for different tasks
 tasks = ["summarization", "translation", "qa", "code"]
+
+base_model_name = "meta-llama/Llama-2-7b-hf"
 
 for task in tasks:
     print(f"Training {task} adapter...")
     
+    # Create config for this task
+    config = NTFConfig(
+        model=ModelConfig(name=base_model_name),
+        peft=PEFTConfig(method="lora", r=16, lora_alpha=32),
+        training=TrainingConfig(output_dir=f"./outputs/{task}-adapter", num_train_epochs=5)
+    )
+    
     # Load base model
-    base_model = NexussTransformer.from_pretrained("./outputs/pretrained")
+    registry = ModelRegistry(config.model)
+    model, tokenizer = registry.load_model_and_tokenizer()
     
     # Apply LoRA
-    peft = PEFTTrainer(base_model, lora_config)
+    adapter_config = registry.apply_peft_adapters(config.peft)
     
     # Train on task data
     dataset = load_task_data(task)
-    trainer = Trainer(peft.get_model(), train_dataset=dataset)
+    trainer = PEFTTrainer(
+        model=model,
+        adapter_config=adapter_config,
+        training_config=config.training,
+        train_dataset=dataset,
+        tokenizer=tokenizer
+    )
     trainer.train()
     
     # Save adapter
-    peft.save_adapter(f"./outputs/{task}-adapter")
+    registry.save_adapter(adapter_config, output_dir=f"./outputs/{task}-adapter", version="1.0.0")
 
 # Inference: swap adapters as needed
-base_model = NexussTransformer.from_pretrained("./outputs/pretrained")
-peft = PEFTTrainer(base_model, lora_config)
+registry = ModelRegistry(ModelConfig(name=base_model_name))
+model, tokenizer = registry.load_model_and_tokenizer()
 
 for task in tasks:
-    peft.load_adapter(f"./outputs/{task}-adapter")
+    registry.load_adapter(model, adapter_path=f"./outputs/{task}-adapter")
     result = generate_for_task(task)
 ```
 
@@ -562,6 +618,8 @@ for task in tasks:
 
 **Solutions**:
 ```python
+from ntf.config import PEFTConfig
+
 # Check if LoRA is applied
 for name, param in model.named_parameters():
     if param.requires_grad:
@@ -570,13 +628,13 @@ for name, param in model.named_parameters():
 # If nothing prints, LoRA wasn't applied correctly
 
 # Increase rank
-lora_config.r = 32  # From 16
+config.peft.r = 32  # From 16
 
 # Increase learning rate
-train_config.learning_rate = 2e-4  # From 1e-4
+config.training.learning_rate = 2e-4  # From 1e-4
 
 # Target more modules
-lora_config.target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
+config.peft.target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
 ```
 
 ### Issue 2: Overfitting
@@ -585,14 +643,16 @@ lora_config.target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
 
 **Solutions**:
 ```python
+from ntf.config import PEFTConfig
+
 # Increase dropout
-lora_config.dropout = 0.1  # From 0.05
+config.peft.lora_dropout = 0.1  # From 0.05
 
 # Reduce rank
-lora_config.r = 8  # From 16
+config.peft.r = 8  # From 16
 
 # Add weight decay
-train_config.weight_decay = 0.1  # From 0.01
+config.training.weight_decay = 0.1  # From 0.01
 
 # Early stopping
 # Monitor eval loss and stop when it increases
@@ -604,18 +664,24 @@ train_config.weight_decay = 0.1  # From 0.01
 
 **Solutions**:
 ```python
+from ntf.config import PEFTConfig
+
 # Use full model LoRA
-lora_config = LoRAConfig.full_model()
+config.peft.target_modules = [
+    "q_proj", "k_proj", "v_proj", "o_proj",
+    "gate_proj", "up_proj", "down_proj",
+]
 
 # Increase alpha
-lora_config.alpha = 64  # From 32
+config.peft.lora_alpha = 64  # From 32
 
 # Train longer
-train_config.num_train_epochs = 10  # From 5
+config.training.num_train_epochs = 10  # From 5
 
 # Fine-tune learning rate
 for lr in [5e-5, 1e-4, 2e-4]:
-    test_training(lr)
+    config.training.learning_rate = lr
+    test_training(config)
 ```
 
 ---

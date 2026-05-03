@@ -2,22 +2,23 @@
 
 ## Overview
 
-This tutorial covers comprehensive model validation, testing strategies, and quality assurance processes essential for production-ready AI systems. We'll explore statistical validation methods, bias detection, robustness testing, and systematic evaluation frameworks.
+This tutorial covers comprehensive model validation, testing strategies, and quality assurance processes essential for production-ready AI systems. We'll explore NTF's unified metrics utilities, statistical validation methods, bias detection, robustness testing, and systematic evaluation frameworks.
 
 ## Table of Contents
 
 1. [Validation Fundamentals](#validation-fundamentals)
-2. [Train/Validation/Test Splits](#trainvalidationtest-splits)
-3. [Cross-Validation Techniques](#cross-validation-techniques)
-4. [Statistical Significance Testing](#statistical-significance-testing)
-5. [Bias and Fairness Detection](#bias-and-fairness-detection)
-6. [Robustness Testing](#robustness-testing)
-7. [Adversarial Testing](#adversarial-testing)
-8. [Domain Shift Detection](#domain-shift-detection)
-9. [Calibration and Confidence Estimation](#calibration-and-confidence-estimation)
-10. [A/B Testing Framework](#ab-testing-framework)
-11. [Regression Testing for Models](#regression-testing-for-models)
-12. [Quality Gates and Release Criteria](#quality-gates-and-release-criteria)
+2. [NTF Metrics Utilities](#ntf-metrics-utilities)
+3. [Train/Validation/Test Splits](#trainvalidationtest-splits)
+4. [Cross-Validation Techniques](#cross-validation-techniques)
+5. [Statistical Significance Testing](#statistical-significance-testing)
+6. [Bias and Fairness Detection](#bias-and-fairness-detection)
+7. [Robustness Testing](#robustness-testing)
+8. [Adversarial Testing](#adversarial-testing)
+9. [Domain Shift Detection](#domain-shift-detection)
+10. [Calibration and Confidence Estimation](#calibration-and-confidence-estimation)
+11. [A/B Testing Framework](#ab-testing-framework)
+12. [Regression Testing for Models](#regression-testing-for-models)
+13. [Quality Gates and Release Criteria](#quality-gates-and-release-criteria)
 
 ---
 
@@ -58,6 +59,188 @@ Validation ensures your model:
 3. **Statistical Power**: Ensure sufficient sample sizes
 4. **Multiple Metrics**: Evaluate across diverse dimensions
 5. **Reproducibility**: Fixed seeds and documented procedures
+
+---
+
+## NTF Metrics Utilities
+
+### Using NTF's Unified Evaluation Interface
+
+NTF provides comprehensive metrics utilities through `ntf.utils.metrics`. This replaces manual metric implementations with a unified, efficient interface.
+
+```python
+from ntf.utils.metrics import (
+    compute_perplexity,
+    compute_accuracy,
+    evaluate_model,
+    compare_models,
+    benchmark_throughput,
+    EvaluationResults
+)
+from torch.utils.data import DataLoader
+import torch
+
+# Load your model and tokenizer
+model, tokenizer = load_model_and_tokenizer("path/to/model")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
+# Prepare test dataloader
+test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
+# Comprehensive evaluation
+results = evaluate_model(
+    model=model,
+    dataloader=test_dataloader,
+    device=device,
+    compute_generation_metrics=True,
+    tokenizer=tokenizer
+)
+
+print(f"Perplexity: {results.perplexity:.2f}")
+print(f"Loss: {results.loss:.4f}")
+print(f"Token Accuracy: {results.token_accuracy:.4f}")
+print(f"BLEU Score: {results.bleu_score:.4f}")
+print(f"ROUGE-L: {results.rouge_l:.4f}")
+```
+
+### Individual Metric Functions
+
+For specific metric computation, NTF provides standalone functions:
+
+```python
+# Compute perplexity only
+perplexity = compute_perplexity(model, test_dataloader, device)
+print(f"Perplexity: {perplexity:.2f}")
+
+# Compute accuracy only
+accuracy = compute_accuracy(model, test_dataloader, device)
+print(f"Accuracy: {accuracy:.4f}")
+```
+
+### Comparing Multiple Checkpoints
+
+NTF makes it easy to compare different model checkpoints:
+
+```python
+from ntf.utils.metrics import compare_models
+
+# Compare two model versions
+comparison = compare_models(
+    model_a=model_v1,
+    model_b=model_v2,
+    dataloader=val_dataloader,
+    device=device
+)
+
+print(f"Model A Perplexity: {comparison['model_a']['perplexity']:.2f}")
+print(f"Model B Perplexity: {comparison['model_b']['perplexity']:.2f}")
+print(f"Improvement: {comparison['improvement']['perplexity']:.2f}%")
+print(f"Accuracy Gain: {comparison['improvement']['accuracy']:.2f}%")
+```
+
+### Benchmarking Throughput
+
+For production deployment, benchmark model throughput:
+
+```python
+throughput_results = benchmark_throughput(
+    model=model,
+    tokenizer=tokenizer,
+    device=device,
+    sequence_length=512,
+    batch_size=1,
+    num_iterations=10
+)
+
+print(f"Prefill Throughput: {throughput_results['prefill_throughput']:.2f} tokens/sec")
+print(f"Decode Throughput: {throughput_results['decode_throughput']:.2f} tokens/sec")
+```
+
+### Metric Selection Guide
+
+Different tasks require different evaluation metrics. Use this guide to select appropriate metrics:
+
+| Task Type | Recommended Metrics | NTF Functions |
+|-----------|---------------------|---------------|
+| Text Generation | Perplexity, BLEU, ROUGE, BERTScore | `evaluate_model(compute_generation_metrics=True)` |
+| Classification | Accuracy, F1, Precision, Recall | `compute_accuracy()` + custom F1 |
+| Summarization | ROUGE, BERTScore | `evaluate_model()` with ROUGE |
+| Translation | BLEU, chrF, COMET | `evaluate_model()` with BLEU |
+| Question Answering | Exact Match, F1 | Custom implementation |
+| Language Modeling | Perplexity | `compute_perplexity()` |
+
+### Checkpoint Comparison Workflow
+
+Here's a complete workflow for comparing multiple checkpoints during development:
+
+```python
+from ntf.utils.metrics import evaluate_model
+from pathlib import Path
+import json
+
+def compare_checkpoints(checkpoint_paths, eval_dataset, tokenizer, device):
+    """Compare multiple checkpoints on the same evaluation dataset."""
+    
+    from torch.utils.data import DataLoader
+    eval_dataloader = DataLoader(eval_dataset, batch_size=32, shuffle=False)
+    
+    results = {}
+    
+    for checkpoint_path in checkpoint_paths:
+        print(f"\nEvaluating {checkpoint_path}...")
+        
+        # Load checkpoint
+        model, _ = load_model_and_tokenizer(checkpoint_path)
+        model.to(device)
+        model.eval()
+        
+        # Evaluate
+        eval_results = evaluate_model(
+            model=model,
+            dataloader=eval_dataloader,
+            device=device,
+            compute_generation_metrics=True,
+            tokenizer=tokenizer
+        )
+        
+        # Store results
+        results[checkpoint_path] = {
+            'perplexity': eval_results.perplexity,
+            'loss': eval_results.loss,
+            'accuracy': eval_results.accuracy,
+            'bleu': eval_results.bleu_score,
+            'rouge_l': eval_results.rouge_l
+        }
+        
+        print(f"  Perplexity: {eval_results.perplexity:.2f}")
+        print(f"  Accuracy: {eval_results.accuracy:.4f}")
+    
+    # Find best checkpoint
+    best_checkpoint = min(results.keys(), key=lambda k: results[k]['perplexity'])
+    print(f"\nBest checkpoint (lowest perplexity): {best_checkpoint}")
+    
+    return results
+
+# Usage
+checkpoints = [
+    "./checkpoints/step_1000",
+    "./checkpoints/step_2000",
+    "./checkpoints/step_3000",
+    "./checkpoints/final"
+]
+
+all_results = compare_checkpoints(
+    checkpoints, 
+    val_dataset, 
+    tokenizer, 
+    device
+)
+
+# Save results for tracking
+with open("./evaluation_results.json", "w") as f:
+    json.dump(all_results, f, indent=2)
+```
 
 ---
 

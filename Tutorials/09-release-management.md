@@ -1,7 +1,7 @@
 # Tutorial 9: Release Management & Version Control
 
 ## Overview
-Training a model is not the end—it's the beginning of its lifecycle. This tutorial covers **versioning strategies**, **model freezing**, **release protocols**, **rollback procedures**, and **deprecation policies**. Proper release management ensures reproducibility, accountability, and smooth operations in production.
+Training a model is not the end—it's the beginning of its lifecycle. This tutorial covers **versioning strategies**, **model freezing**, **release protocols**, **rollback procedures**, and **deprecation policies**. We'll use NTF's `ModelRegistry` for semantic versioning and metadata tracking. Proper release management ensures reproducibility, accountability, and smooth operations in production.
 
 ## Prerequisites
 - Understanding of training pipelines (Tutorial 02)
@@ -10,9 +10,9 @@ Training a model is not the end—it's the beginning of its lifecycle. This tuto
 
 ---
 
-## 1. Semantic Versioning for Models
+## 1. Semantic Versioning with ModelRegistry
 
-Adopt a clear versioning scheme to communicate changes effectively.
+NTF provides built-in semantic versioning through `ModelRegistry`. Adopt a clear versioning scheme to communicate changes effectively.
 
 ### Format: `MAJOR.MINOR.PATCH`
 
@@ -22,13 +22,57 @@ Adopt a clear versioning scheme to communicate changes effectively.
 | **MINOR** | New features, performance improvements, backward-compatible | `1.2.0` → `1.3.0` (added SQL capability) |
 | **PATCH** | Bug fixes, retraining on more data, no architecture change | `1.2.3` → `1.2.4` (fixed tokenization bug) |
 
+### Using NTF's ModelRegistry
+
+```python
+from ntf.models import ModelRegistry
+from ntf.config import ModelConfig
+from ntf.utils.versioning import ModelStage, create_model_metadata
+
+# Initialize registry with versioning enabled
+registry = ModelRegistry(
+    model_config=ModelConfig(name="meta-llama/Llama-2-7b-hf"),
+    registry_path="./model_registry",
+    enable_versioning=True
+)
+
+# After training, save with automatic versioning
+registry.save_model(
+    model=trained_model,
+    tokenizer=tokenizer,
+    version="1.0.0",  # Semantic versioning
+    metadata={
+        "training_config": config.to_dict(),
+        "metrics": {"eval_loss": 0.234, "perplexity": 12.5},
+        "dataset": "custom_instructions_v1",
+        "peft_method": "lora",
+        "notes": "Initial fine-tuning run"
+    }
+)
+
+# List all versions
+versions = registry.list_versions()
+print(f"Available versions: {versions}")
+
+# Load specific version
+model_v1, tokenizer = registry.load_model_and_tokenizer(version="1.0.0")
+
+# Compare versions
+comparison = registry.compare_versions(["1.0.0", "1.1.0"], metrics=["eval_loss"])
+
+# Rollback to previous version if needed
+registry.rollback("1.0.0")
+```
+
 ### Additional Metadata
+
 Use build metadata for internal tracking:
 - `1.2.3+data2024Q1` - Trained on Q1 2024 data
 - `1.2.3+rlhf` - Includes RLHF fine-tuning
 - `1.2.3+hotfix1` - Emergency patch
 
 ### Version Naming Convention
+
 ```
 {model-family}-{version}-{quantization}-{context-length}
 
@@ -37,6 +81,21 @@ Examples:
 - nexuss-assistant-2.1.0-int4-8k
 - nexuss-coder-1.0.0-bf16-16k
 ```
+
+### Semantic Versioning Guidelines
+
+- **MAJOR.MINOR.PATCH** format (e.g., 1.0.0, 2.1.3)
+- **MAJOR**: Breaking changes, architecture modifications
+- **MINOR**: New features, performance improvements
+- **PATCH**: Bug fixes, minor adjustments
+
+### Metadata Best Practices
+
+- Always include training configuration
+- Document dataset version and preprocessing
+- Record evaluation metrics
+- Add notes about known limitations
+- Tag production-ready models
 
 ---
 
