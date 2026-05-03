@@ -1,0 +1,84 @@
+# Nexuss Transformer Framework - Pre-training Configuration (Small)
+# Optimized for Ethiopian languages with EthioBBPE tokenizer
+
+model:
+  # Architecture
+  model_type: "decoder_only"
+  vocab_size: 16000  # Matches EthioBBPE vocabulary size
+  hidden_size: 768
+  num_hidden_layers: 12
+  num_attention_heads: 12
+  intermediate_size: 3072
+  
+  # Position embeddings
+  max_position_embeddings: 2048
+  use_rope: true
+  rope_theta: 10000.0
+  
+  # Activations & Normalization
+  hidden_act: "swiglu"
+  rms_norm_eps: 1e-6
+  
+  # Attention
+  attention_dropout: 0.0
+  use_flash_attention: false  # Enable if flash-attn installed
+  
+  # Optimization
+  gradient_checkpointing: true
+  use_cache: true
+
+data:
+  train_path: "data/train.jsonl"  # Path to training data
+  val_path: "data/val.jsonl"      # Path to validation data (optional)
+  
+  # Tokenization (EthioBBPE)
+  tokenizer_name: "ethiobbpe"
+  max_length: 2048
+  stride: 512  # For grouping texts
+  
+  # Data loading
+  num_workers: 4
+  prefetch_factor: 2
+
+training:
+  # Batch sizes
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 16
+  gradient_accumulation_steps: 4
+  
+  # Learning rate schedule
+  learning_rate: 3e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  lr_scheduler_type: "cosine"
+  max_steps: 100000
+  
+  # Mixed precision
+  bf16: true
+  fp16: false
+  
+  # Optimizer
+  optim: "adamw_torch"
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_epsilon: 1e-8
+
+checkpoint:
+  save_steps: 1000
+  save_total_limit: 3
+  save_best_only: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+
+validation:
+  eval_steps: 500
+  eval_strategy: "steps"
+  
+logging:
+  logging_steps: 50
+  report_to: ["tensorboard", "wandb"]
+  project_name: "nexuss-transformer"
+  run_name: "pretrain-small-v1"
+
+output_dir: "outputs/pretrain_small"
+seed: 42

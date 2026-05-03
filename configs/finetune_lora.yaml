@@ -1,0 +1,78 @@
+# Nexuss Transformer Framework - LoRA Fine-tuning Configuration
+# Parameter-efficient fine-tuning with EthioBBPE tokenizer
+
+model:
+  # Base model path (pre-trained checkpoint)
+  model_name_or_path: "outputs/pretrain_small/checkpoint-10000"
+  
+  # Architecture (must match base model)
+  vocab_size: 16000
+  hidden_size: 768
+  num_hidden_layers: 12
+  num_attention_heads: 12
+  intermediate_size: 3072
+  max_position_embeddings: 2048
+
+data:
+  train_path: "data/finetune_train.jsonl"
+  val_path: "data/finetune_val.jsonl"
+  
+  # Tokenization
+  tokenizer_name: "ethiobbpe"
+  max_length: 1024
+  
+  # Data loading
+  num_workers: 4
+
+training:
+  # Batch sizes (smaller for fine-tuning)
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 8
+  
+  # Learning rate (lower than pre-training)
+  learning_rate: 1e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  lr_scheduler_type: "cosine"
+  max_steps: 5000
+  
+  # Mixed precision
+  bf16: true
+  fp16: false
+
+# LoRA Configuration
+lora:
+  enable: true
+  r: 16                    # LoRA rank
+  alpha: 32                # LoRA alpha (scaling factor)
+  dropout: 0.05            # LoRA dropout
+  bias: "none"             # Bias type: "none", "all", "lora_only"
+  target_modules:          # Modules to apply LoRA
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  task_type: "CAUSAL_LM"   # Task type for PEFT
+  modules_to_save: null    # Additional modules to fully train
+
+checkpoint:
+  save_steps: 500
+  save_total_limit: 2
+  save_best_only: true
+
+validation:
+  eval_steps: 250
+  eval_strategy: "steps"
+
+logging:
+  logging_steps: 25
+  report_to: ["tensorboard", "wandb"]
+  project_name: "nexuss-transformer"
+  run_name: "finetune-lora-v1"
+
+output_dir: "outputs/finetune_lora"
+seed: 42
