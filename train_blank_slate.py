@@ -556,6 +556,33 @@ def main(args):
     
     print("\n[4/7] Creating blank slate model...")
     
+    # Check GPU and Flash Attention availability before model creation
+    has_gpu = torch.cuda.is_available()
+    flash_attn_available = False
+    
+    if has_gpu:
+        gpu_name = torch.cuda.get_device_name(0)
+        gpu_capability = torch.cuda.get_device_capability(0)
+        print(f"\n🚀 GPU Detected: {gpu_name}")
+        print(f"   Compute Capability: {gpu_capability[0]}.{gpu_capability[1]}")
+        
+        # Try to import Flash Attention
+        try:
+            from flash_attn import flash_attn_func
+            flash_attn_available = True
+            print(f"   ✓ Flash Attention 2: Available")
+        except ImportError:
+            print(f"   ⚠ Flash Attention 2: Not installed")
+            print(f"   💡 Install with: pip install flash-attn --no-build-isolation")
+        
+        if gpu_capability[0] >= 8 and flash_attn_available:
+            print(f"   → Will auto-enable Flash Attention in model layers")
+        elif gpu_capability[0] < 8:
+            print(f"   → GPU architecture too old for Flash Attention (requires Ampere+)")
+    else:
+        print("\n⚠️  No GPU detected - training will run on CPU (slow)")
+        print("   Enable GPU in your environment for faster training")
+    
     model, model_config = create_blank_slate_model(
         vocab_size=vocab_size,
         model_size=args.model_size,
