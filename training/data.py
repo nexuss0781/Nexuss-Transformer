@@ -3,7 +3,7 @@ Data collation for language modeling.
 
 Provides efficient batch collation with padding and label handling
 for autoregressive language model training.
-Integrated with EthioBBPE tokenizer for Ethiopian languages.
+Integrated with NTFTokenizer (EthioBBPE-based) for Ethiopian languages.
 """
 
 from typing import Dict, List, Optional, Any, Union
@@ -11,6 +11,13 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
 from datasets import Dataset as HFDataset
+
+try:
+    from tokenizer import NTFTokenizer
+    NTF_TOKENIZER_AVAILABLE = True
+except ImportError:
+    NTF_TOKENIZER_AVAILABLE = False
+    NTFTokenizer = None
 
 
 class TextDataset(Dataset):
@@ -200,11 +207,11 @@ def create_training_dataset(
     """
     Create a dataset from raw texts.
     
-    Supports both EthioBBPE and HuggingFace tokenizers.
+    Supports NTFTokenizer, EthioBBPE, and HuggingFace tokenizers.
     
     Args:
         texts: List of text strings
-        tokenizer: Tokenizer instance (EthioBBPE or HF tokenizer)
+        tokenizer: Tokenizer instance (NTFTokenizer, EthioBBPE, or HF tokenizer)
         max_length: Maximum sequence length
         stride: Stride for chunking long texts (None for truncation)
     
@@ -214,14 +221,23 @@ def create_training_dataset(
     from datasets import Dataset
     
     # Detect tokenizer type
-    is_ethiobbpe = hasattr(tokenizer, 'encode_batch') or type(tokenizer).__name__ == 'EthioBBPE'
+    is_ntf_tokenizer = NTF_TOKENIZER_AVAILABLE and isinstance(tokenizer, NTFTokenizer)
+    is_ethiobbpe = hasattr(tokenizer, 'encode_batch') or type(tokenizer).__name__ in ['EthioBBPE', 'NTFTokenizer']
     
     # Tokenize all texts
     def tokenize_function(examples):
-        if is_ethiobbpe:
-            # EthioBBPE tokenizer
+        if is_ntf_tokenizer:
+            # NTFTokenizer - use callable interface
+            encoded = tokenizer(examples["text"], add_special_tokens=True, padding=False, truncation=True, max_length=max_length)
+            return {"input_ids": encoded["input_ids"]}
+        elif is_ethiobbpe:
+            # EthioBBPE-style tokenizer with encode_batch
             encoded = tokenizer.encode_batch(examples["text"])
-            input_ids = [item["ids"] for item in encoded]
+            # Handle both TokenizerOutput objects and dict returns
+            if hasattr(encoded[0], 'ids'):
+                input_ids = [item.ids for item in encoded]
+            else:
+                input_ids = [item["ids"] for item in encoded]
             return {"input_ids": input_ids}
         else:
             # HuggingFace tokenizer
