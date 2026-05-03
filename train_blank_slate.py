@@ -27,6 +27,7 @@ import pandas as pd
 import torch
 from datasets import Dataset, concatenate_datasets
 import random
+from tqdm import tqdm
 
 # Add project root to path
 project_root = Path(__file__).parent
@@ -618,12 +619,13 @@ def main(args):
             input_ids = [out.ids for out in encoded_outputs]
             return {"input_ids": input_ids}
         
-        # Tokenize dataset in batches
+        # Tokenize dataset in batches with tqdm progress bar
         tokenized_dataset = dataset.map(
             tokenize_function,
             batched=True,
             remove_columns=["text"],  # Remove raw text after tokenization
             desc="Tokenizing dataset",
+            disable=False  # Always show tqdm for tokenization
         )
         print(f"✓ Dataset tokenized: {len(tokenized_dataset)} samples")
     else:

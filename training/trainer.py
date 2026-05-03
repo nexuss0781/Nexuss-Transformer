@@ -273,7 +273,12 @@ class Trainer:
             range(max_steps),
             desc="Training",
             disable=not self.accelerator.is_main_process,
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}, loss={postfix[loss]:.4f}]" if self.accelerator.is_main_process else None,
         )
+        
+        # Initialize postfix for dynamic loss display
+        if self.accelerator.is_main_process:
+            progress_bar.set_postfix(loss=0.0)
         
         for epoch in range(self.config.num_train_epochs):
             self.epoch = epoch
@@ -309,6 +314,9 @@ class Trainer:
                     if self.global_step % self.config.logging_steps == 0:
                         avg_loss = loss.item() * self.config.gradient_accumulation_steps
                         self._log_metrics(step, avg_loss, progress_bar)
+                        # Update progress bar with current loss
+                        if self.accelerator.is_main_process:
+                            progress_bar.set_postfix(loss=avg_loss)
                     
                     # Evaluation
                     if (
