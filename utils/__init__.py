@@ -31,6 +31,14 @@ from .metrics import (
     compare_models,
 )
 
+from .logging import (
+    setup_logging,
+    get_logger,
+    set_log_level,
+    DebugLogger,
+    validate_config,
+)
+
 __all__ = [
     # Continual Learning
     "EWCConfig",
@@ -57,4 +65,11 @@ __all__ = [
     "evaluate_model",
     "benchmark_throughput",
     "compare_models",
+    
+    # Logging
+    "setup_logging",
+    "get_logger",
+    "set_log_level",
+    "DebugLogger",
+    "validate_config",
 ]

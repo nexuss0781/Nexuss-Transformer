@@ -10,6 +10,73 @@ from typing import Optional, List
 
 
 @dataclass
+class QuantizationConfig:
+    """
+    Configuration for model quantization.
+    
+    Supports multiple quantization methods:
+    - bitsandbytes: 4-bit and 8-bit quantization
+    - gptq: GPU-aware INT4 quantization
+    - awq: Activation-aware weight quantization
+    
+    Args:
+        method: Quantization method ('bitsandbytes', 'gptq', 'awq')
+        load_in_4bit: Load model in 4-bit precision
+        load_in_8bit: Load model in 8-bit precision
+        bnb_4bit_quant_type: 4-bit quantization type ('nf4', 'fp4')
+        bnb_4bit_compute_dtype: Compute dtype for 4-bit operations
+        bnb_4bit_use_double_quant: Use nested quantization
+        gptq_bits: Number of bits for GPTQ
+        gptq_group_size: Group size for GPTQ
+        awq_w_bit: Bit width for AWQ
+        awq_group_size: Group size for AWQ
+    """
+    
+    # Method selection
+    method: str = "bitsandbytes"  # 'bitsandbytes', 'gptq', 'awq'
+    
+    # BitsAndBytes configuration
+    load_in_4bit: bool = False
+    load_in_8bit: bool = False
+    bnb_4bit_quant_type: str = "nf4"
+    bnb_4bit_compute_dtype: str = "bfloat16"
+    bnb_4bit_use_double_quant: bool = True
+    
+    # GPTQ configuration
+    gptq_bits: int = 4
+    gptq_group_size: int = 128
+    
+    # AWQ configuration
+    awq_w_bit: int = 4
+    awq_group_size: int = 128
+    
+    def to_dict(self) -> dict:
+        """Convert to dictionary for transformers integration"""
+        result = {
+            "method": self.method,
+        }
+        
+        if self.method == "bitsandbytes":
+            if self.load_in_4bit:
+                result["load_in_4bit"] = True
+                result["bnb_4bit_quant_type"] = self.bnb_4bit_quant_type
+                result["bnb_4bit_compute_dtype"] = self.bnb_4bit_compute_dtype
+                result["bnb_4bit_use_double_quant"] = self.bnb_4bit_use_double_quant
+            elif self.load_in_8bit:
+                result["load_in_8bit"] = True
+        
+        elif self.method == "gptq":
+            result["bits"] = self.gptq_bits
+            result["group_size"] = self.gptq_group_size
+            
+        elif self.method == "awq":
+            result["w_bit"] = self.awq_w_bit
+            result["group_size"] = self.awq_group_size
+        
+        return result
+
+
+@dataclass
 class NTFConfig:
     """
     Configuration class for Nexuss Transformer Framework decoder-only model.
@@ -39,6 +106,7 @@ class NTFConfig:
         gradient_checkpointing: Whether to use gradient checkpointing
         use_rmsnorm: Whether to use RMSNorm instead of LayerNorm
         use_swiglu: Whether to use SwiGLU activation
+        quantization: Optional QuantizationConfig for model loading
     """
     
     # Core architecture
@@ -82,6 +150,9 @@ class NTFConfig:
     # Runtime options
     use_cache: bool = True
     gradient_checkpointing: bool = False
+    
+    # Quantization configuration
+    quantization: Optional["QuantizationConfig"] = None
     
     def __post_init__(self):
         """Validate and set default values."""

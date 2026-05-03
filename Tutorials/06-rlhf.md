@@ -2,7 +2,7 @@
 
 ## Overview
 
-Reinforcement Learning from Human Feedback (RLHF) aligns language models with human preferences and values. This tutorial covers the complete RLHF pipeline from reward modeling to PPO training.
+Reinforcement Learning from Human Feedback (RLHF) aligns language models with human preferences and values. This tutorial covers the complete RLHF pipeline using **Nexuss Transformer Framework's** native `RewardModel`, `PreferenceDataset`, and `RLHFPipeline` utilities.
 
 ### What is RLHF?
 
@@ -38,7 +38,71 @@ RLHF is a three-stage process:
 
 ---
 
-## Section 1: Collecting Preference Data
+## Section 1: The NTF RLHF Pipeline
+
+### RLHF Workflow
+
+1. **Supervised Fine-Tuning (SFT)**: Train on instruction-following data
+2. **Reward Modeling**: Train reward model on human preference data
+3. **RL Optimization**: Use PPO to optimize policy against reward model
+4. **Evaluation**: Assess alignment with human preferences
+
+NTF provides native components for each stage, ensuring consistency and reproducibility.
+
+### Complete RLHF Example with NTF
+
+```python
+from ntf.reward import RewardModel, PreferenceDataset, RLHFPipeline
+from ntf.models import ModelRegistry
+from ntf.config import RewardConfig
+
+# 1. Load base model
+registry = ModelRegistry(model_config)
+base_model, tokenizer = registry.load_model_and_tokenizer()
+
+# 2. Initialize NTF's RewardModel
+reward_config = RewardConfig(
+    base_model_name="meta-llama/Llama-2-7b-hf",
+    num_labels=1,
+    pad_token_id=tokenizer.pad_token_id
+)
+reward_model = RewardModel(reward_config)
+reward_model.load_base_model(base_model)
+
+# 3. Load preference data with NTF utilities
+pref_dataset = PreferenceDataset(
+    data_path="preferences.jsonl",
+    tokenizer=tokenizer,
+    max_length=512
+)
+
+# 4. Train reward model
+from ntf.reward.trainer import RewardTrainer
+reward_trainer = RewardTrainer(
+    model=reward_model,
+    dataset=pref_dataset,
+    config=reward_config
+)
+reward_trainer.train()
+
+# 5. Use in RLHF pipeline
+pipeline = RLHFPipeline(
+    policy_model=policy_model,
+    reward_model=reward_model,
+    reference_model=ref_model,
+    tokenizer=tokenizer
+)
+
+pipeline.run_ppo(
+    prompts=prompts,
+    num_iterations=100,
+    kl_coeff=0.2
+)
+```
+
+---
+
+## Section 2: Collecting Preference Data
 
 ### Preference Data Format
 

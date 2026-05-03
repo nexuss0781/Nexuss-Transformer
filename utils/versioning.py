@@ -350,6 +350,94 @@ class ModelRegistry:
             ModelStage.ARCHIVED,
             changelog_entry=f"Archived: {reason}" if reason else "Archived"
         )
+    
+    def export_for_serving(
+        self,
+        name: str,
+        version: str,
+        format: str = "onnx",
+        output_path: Optional[str] = None,
+    ) -> str:
+        """
+        Export model for serving in specified format.
+        
+        Args:
+            name: Model name
+            version: Model version
+            format: Export format ('onnx', 'torchscript')
+            output_path: Output directory (default: creates in releases dir)
+            
+        Returns:
+            Path to exported model
+        """
+        from pathlib import Path
+        import torch
+        
+        # Get model
+        model_path, metadata = self.get_model(name, version)
+        
+        # Set output path
+        if output_path is None:
+            output_path = str(self.releases_dir / name / version / f"serving_{format}")
+        
+        output_dir = Path(output_path)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Load model and tokenizer
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            
+            model = AutoModelForCausalLM.from_pretrained(str(model_path))
+            tokenizer = AutoTokenizer.from_pretrained(str(model_path))
+        except Exception as e:
+            raise ValueError(f"Failed to load model: {e}")
+        
+        # Export based on format
+        if format.lower() == "onnx":
+            # Export to ONNX
+            dummy_input = torch.ones((1, 128), dtype=torch.long)
+            
+            torch.onnx.export(
+                model,
+                dummy_input,
+                str(output_dir / "model.onnx"),
+                input_names=["input_ids"],
+                output_names=["logits"],
+                dynamic_axes={
+                    "input_ids": {0: "batch_size", 1: "sequence_length"},
+                    "logits": {0: "batch_size", 1: "sequence_length"}
+                },
+                opset_version=14,
+            )
+            tokenizer.save_pretrained(output_dir)
+            
+        elif format.lower() == "torchscript":
+            # Export to TorchScript
+            model.eval()
+            dummy_input = torch.ones((1, 128), dtype=torch.long)
+            
+            traced_model = torch.jit.trace(model, dummy_input)
+            traced_model.save(str(output_dir / "model.pt"))
+            tokenizer.save_pretrained(output_dir)
+            
+        else:
+            raise ValueError(f"Unsupported export format: {format}. Use 'onnx' or 'torchscript'.")
+        
+        # Save export manifest
+        manifest = {
+            "name": name,
+            "version": version,
+            "format": format,
+            "export_path": str(output_dir),
+            "original_model_path": str(model_path),
+        }
+        
+        with open(output_dir / "export_manifest.json", "w") as f:
+            import json
+            json.dump(manifest, f, indent=2)
+        
+        print(f"Model exported to {output_dir} in {format} format")
+        return str(output_dir)
 
 
 def create_model_metadata(
