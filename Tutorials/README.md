@@ -4,7 +4,7 @@ Welcome to the **Nexuss AI Engineering Handbook**. This is a comprehensive, incr
 
 **📚 Full documentation available at [Nexuss-Transformer.gt.tc](https://Nexuss-Transformer.gt.tc)**
 
-Whether you are a beginner looking to understand the basics of transformer architecture or a senior engineer optimizing distributed training clusters, this guide covers the entire lifecycle of modern Large Language Model (LLM) development.
+Whether you are starting your journey in AI engineering or are an experienced professional optimizing production systems, this guide covers the entire lifecycle of modern Large Language Model (LLM) development.
 
 ---
 
@@ -37,34 +37,6 @@ This series consists of **incremental modules**. Each module builds upon the pre
 | **11** | [Inference Optimization](./11-inference-optimization.md) | Serving at Scale | Quantization (INT4/FP8), vLLM, PagedAttention, speculative decoding. |
 | **12** | [MLOps & Governance](./12-mlops-governance.md) | Automation & Compliance | CI/CD for models, registries, audit trails, model cards, compliance. |
 | **13** | [Troubleshooting](./13-troubleshooting.md) | Debugging & Profiling | Fixing NaNs/OOMs, convergence diagnosis, performance profiling, bottleneck analysis. |
-
----
-
-## 🎯 Learning Paths
-
-Choose your path based on your current experience level and goals.
-
-### 👶 Beginner: "Hello World" to First Model
-*Goal: Understand how transformers work and train a small model locally.*
-1.  Start with **00 - Introduction** to grasp the big picture.
-2.  Read **01 - Blank Slate Models** to understand the code structure.
-3.  Follow **02 - First Training Run** step-by-step to get a model running.
-4.  Explore **05 - PEFT & LoRA** to learn efficient fine-tuning on consumer hardware.
-
-### 👷 Intermediate: Fine-Tuning & Domain Adaptation
-*Goal: Adapt open-source models to specific domains and optimize performance.*
-1.  Review **03 - Full Fine-Tuning** for DeepSpeed and multi-GPU setups.
-2.  Dive into **04 - Advanced Fine-Tuning** for DPO and Instruction Tuning.
-3.  Study **07 - Validation & Testing** to ensure your model is robust and unbiased.
-4.  Learn **11 - Inference Optimization** to serve your model efficiently.
-
-### 🏆 Advanced: Scale, Alignment & Production
-*Goal: Train large-scale models, align them with human values, and manage production lifecycles.*
-1.  Master **06 - RLHF** for alignment and reward modeling.
-2.  Implement **10 - Distributed Training** for billion-parameter scale.
-3.  Establish **09 - Release Management** and **12 - MLOps** for safe deployment.
-4.  Use **13 - Troubleshooting** to diagnose complex distributed training issues.
-5.  Apply **08 - Continual Learning** for long-term model maintenance.
 
 ---
 
