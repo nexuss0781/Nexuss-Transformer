@@ -695,30 +695,147 @@ def main(args):
         # Train the model
         metrics = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
         
-        # Print final results
+        # Calculate detailed model statistics
+        total_params = sum(p.numel() for p in model.parameters())
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        frozen_params = total_params - trainable_params
+        
+        # Calculate memory footprint (in MB, assuming float32)
+        param_memory_mb = (total_params * 4) / (1024 * 1024)  # 4 bytes per float32
+        
+        # Calculate theoretical FLOPs for one forward pass (approximate)
+        # For transformer: ~2 * params * seq_len for attention + FFN
+        avg_seq_len = args.max_seq_len
+        flops_per_token = 2 * total_params  # Simplified estimate
+        total_flops = flops_per_token * len(tokenized_dataset) * args.num_epochs
+        
+        # Print comprehensive final results
         print("\n" + "╔" + "═" * 58 + "╗")
-        print("║" + " " * 20 + "TRAINING COMPLETED!" + " " * 20 + "║")
+        print("║" + " " * 18 + "TRAINING COMPLETED!" + " " * 21 + "║")
         print("╚" + "═" * 58 + "╝")
-        print(f"\n📊 Final Metrics:")
+        
+        print(f"\n📊 FINAL TRAINING METRICS:")
+        print("─" * 60)
         print(f"  • Training loss:     {metrics['train_loss']:.4f}")
         print(f"  • Global steps:      {metrics['global_step']:,}")
         print(f"  • Epochs trained:    {metrics['epochs_trained']}")
         print(f"  • Training time:     {metrics['training_time_seconds']:.1f}s ({metrics['training_time_seconds']/60:.1f} min)")
         print(f"  • Samples/sec:       {metrics['samples_per_second']:.2f}")
-        print(f"\n💾 Model saved to: {output_dir}")
-        print("=" * 60)
+        
+        print(f"\n🧠 MODEL ARCHITECTURE STATISTICS:")
+        print("─" * 60)
+        print(f"  • Total parameters:      {total_params:,} ({total_params/1e6:.2f}M)")
+        print(f"  • Trainable parameters:  {trainable_params:,} ({trainable_params/1e6:.2f}M)")
+        if frozen_params > 0:
+            print(f"  • Frozen parameters:     {frozen_params:,} ({frozen_params/1e6:.2f}M)")
+        print(f"  • Parameter memory:      {param_memory_mb:.2f} MB (FP32 equivalent)")
+        print(f"  • Vocabulary size:       {vocab_size:,}")
+        print(f"  • Max sequence length:   {args.max_seq_len}")
+        print(f"  • Model depth:           {model_config.num_layers} layers")
+        print(f"  • Hidden dimension:      {model_config.dim_model}")
+        print(f"  • Attention heads:       {model_config.num_heads}")
+        print(f"  • FFN dimension:         {model_config.dim_ffn}")
+        
+        # Architecture features
+        features = []
+        if model_config.use_rope: features.append("RoPE")
+        if model_config.use_swiglu: features.append("SwiGLU")
+        if model_config.use_rmsnorm: features.append("RMSNorm")
+        if model_config.tie_embeddings: features.append("Tied Embeddings")
+        if args.gradient_checkpointing: features.append("Gradient Checkpointing")
+        print(f"  • Architecture features: {', '.join(features)}")
+        
+        print(f"\n💻 COMPUTATIONAL STATISTICS:")
+        print("─" * 60)
+        print(f"  • Dataset size:          {len(tokenized_dataset):,} samples")
+        print(f"  • Total tokens processed:{len(tokenized_dataset) * avg_seq_len:,}")
+        print(f"  • Estimated FLOPs:       {total_flops/1e12:.2f} TFLOPs")
+        print(f"  • Batch size:            {args.batch_size}")
+        print(f"  • Gradient accumulation: {args.gradient_accumulation}")
+        print(f"  • Effective batch size:  {args.batch_size * args.gradient_accumulation}")
+        
+        print(f"\n🎯 TOKENIZER INFORMATION:")
+        print("─" * 60)
+        if tokenizer:
+            print(f"  • Tokenizer type:        NTFTokenizer (EthioBBPE)")
+            print(f"  • Vocab file:            {args.tokenizer_path or 'Default EthioBBPE'}")
+        else:
+            print(f"  • Tokenizer type:        Character-level (fallback)")
+        print(f"  • Special tokens:        <pad>, <unk>, <s>, </s>, <mask>")
+        
+        print(f"\n💾 OUTPUT FILES:")
+        print("─" * 60)
+        print(f"  • Model directory:       {output_dir}")
+        print(f"  • Final checkpoint:      {output_dir}/checkpoint-final/")
         
         # Save training config for reference
         config_path = output_dir / "training_config.json"
         with open(config_path, 'w') as f:
             json.dump(training_config.to_dict(), f, indent=2)
-        print(f"📝 Training config saved to: {config_path}")
+        print(f"  • Training config:       {config_path}")
         
         # Save model config
         model_config_path = output_dir / "model_config.json"
         with open(model_config_path, 'w') as f:
             json.dump(model_config.to_dict(), f, indent=2)
-        print(f"📝 Model config saved to: {model_config_path}")
+        print(f"  • Model config:          {model_config_path}")
+        
+        # Save comprehensive metrics report
+        metrics_report = {
+            "training_metrics": metrics,
+            "model_statistics": {
+                "total_parameters": total_params,
+                "trainable_parameters": trainable_params,
+                "frozen_parameters": frozen_params,
+                "param_memory_mb": param_memory_mb,
+                "vocab_size": vocab_size,
+                "max_seq_length": args.max_seq_len,
+                "num_layers": model_config.num_layers,
+                "dim_model": model_config.dim_model,
+                "num_heads": model_config.num_heads,
+                "dim_ffn": model_config.dim_ffn,
+                "architecture_features": features,
+            },
+            "computational_statistics": {
+                "dataset_size": len(tokenized_dataset),
+                "total_tokens_processed": len(tokenized_dataset) * avg_seq_len,
+                "estimated_flops_tflops": total_flops / 1e12,
+                "batch_size": args.batch_size,
+                "gradient_accumulation_steps": args.gradient_accumulation,
+                "effective_batch_size": args.batch_size * args.gradient_accumulation,
+            },
+            "tokenizer_info": {
+                "type": "NTFTokenizer (EthioBBPE)" if tokenizer else "Character-level (fallback)",
+                "vocab_size": vocab_size,
+                "pretrained_path": args.tokenizer_path or "Default EthioBBPE",
+            },
+            "hyperparameters": {
+                "num_epochs": args.num_epochs,
+                "learning_rate": args.learning_rate,
+                "warmup_ratio": args.warmup_ratio,
+                "weight_decay": args.weight_decay,
+                "max_grad_norm": args.max_grad_norm,
+                "mixed_precision": args.mixed_precision,
+                "dropout": args.dropout,
+            }
+        }
+        
+        metrics_path = output_dir / "training_metrics_report.json"
+        with open(metrics_path, 'w') as f:
+            json.dump(metrics_report, f, indent=2)
+        print(f"  • Metrics report:        {metrics_path}")
+        
+        print("\n" + "=" * 60)
+        print("✅ BASE KNOWLEDGE TRAINING COMPLETE!")
+        print("=" * 60)
+        print("\n📌 NEXT STEPS:")
+        print("  1. The model now contains Ethiopian Orthodox religious knowledge")
+        print("  2. This checkpoint serves as your FROZEN BASE KNOWLEDGE")
+        print("  3. For future tasks, load this checkpoint and freeze the backbone")
+        print("  4. Fine-tune only adapter layers or task-specific heads")
+        print("\n⚠️  IMPORTANT: This model should now be treated as frozen base knowledge.")
+        print("   Do not continue training on unrelated data without proper safeguards.")
+        print("=" * 60 + "\n")
         
         return metrics
         
