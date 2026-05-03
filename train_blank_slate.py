@@ -624,8 +624,8 @@ def main(args):
             tokenize_function,
             batched=True,
             remove_columns=["text"],  # Remove raw text after tokenization
-            desc="Tokenizing dataset",
-            disable=False  # Always show tqdm for tokenization
+            desc="Tokenizing dataset"
+            # Note: 'disable' argument removed as it's not supported in datasets.map()
         )
         print(f"✓ Dataset tokenized: {len(tokenized_dataset)} samples")
     else:
