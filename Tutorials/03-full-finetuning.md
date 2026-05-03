@@ -16,12 +16,9 @@ Full fine-tuning updates **all parameters** of a pre-trained model for your spec
 
 ### Resource Requirements
 
-**Minimum Hardware:**
-- 7B model: 80GB+ GPU memory (with gradient checkpointing + mixed precision)
-- 13B model: Multi-GPU setup (2-4x A100/H100)
-- 70B model: 8+ GPU cluster required
+**VRAM requirements vary based on sequence length, batch size, precision, and optimization techniques.** Use NTF's `LayerFreezer` and gradient checkpointing to reduce memory footprint. Start with small batch sizes and scale up based on available memory.
 
-**Optimization Techniques Required:**
+**Optimization Techniques:**
 - Gradient Checkpointing: Reduces memory by 60-70%
 - Mixed Precision (FP16/BF16): 2x memory reduction
 - DeepSpeed ZeRO: Shards optimizer states across GPUs
@@ -62,25 +59,16 @@ class FullFineTuning:
 
 ### Memory Breakdown for Full Fine-Tuning
 
-For a 7B model in FP16:
-
-```
-Model weights:          7B × 2 bytes = 14 GB
-Gradients:              7B × 2 bytes = 14 GB
-Optimizer states:       7B × 8 bytes = 56 GB (Adam: 2× momentum + variance)
-Activations:            ~10-20 GB (depends on sequence length)
-─────────────────────────────────────────────────────
-Total (naive):          ~94-104 GB
-```
+Memory requirements vary based on model size, sequence length, batch size, and optimization techniques. Here's a conceptual example:
 
 **With Optimizations:**
 ```
-Gradient Checkpointing: Activations reduced to ~3-5 GB
+Gradient Checkpointing: Activations reduced significantly
 DeepSpeed ZeRO-2:       Optimizer states sharded across GPUs
 Mixed Precision:        Weights + gradients in FP16
 ─────────────────────────────────────────────────────
-Optimized (single GPU): ~40-50 GB (still needs A100 80GB)
-Optimized (4 GPUs):     ~15-20 GB per GPU (feasible!)
+Use NTF's `LayerFreezer` to further reduce memory by freezing backbone layers.
+Start with small batch sizes and scale up based on available memory.
 ```
 
 ---
@@ -89,12 +77,12 @@ Optimized (4 GPUs):     ~15-20 GB per GPU (feasible!)
 
 ### Basic Configuration
 
-Create `configs/full_finetune_7b.yaml`:
+Create `configs/full_finetune.yaml`:
 
 ```yaml
-# Full Fine-Tuning Configuration for 7B Model
+# Full Fine-Tuning Configuration
 model:
-  name_or_path: "meta-llama/Llama-2-7b-hf"
+  name_or_path: "your-model-path"
   model_type: "causal_lm"
   trust_remote_code: false
 
@@ -112,9 +100,9 @@ training:
   # Critical optimizations for memory
   gradient_checkpointing: true
   fp16: true
-  bf16: false  # Set true if using A100/H100
+  bf16: false  # Set true if using GPUs that support BF16
   
-  # Batch sizing
+  # Batch sizing - adjust based on available memory
   per_device_train_batch_size: 2
   per_device_eval_batch_size: 4
   gradient_accumulation_steps: 8  # Effective batch = 2×8×num_gpus
@@ -857,11 +845,8 @@ for prompt in prompts:
 # AWS: Use spot instances with checkpointing
 # GCP: Use preemptible VMs
 
-# Estimated costs (as of 2024):
-# 4x A100 (80GB) on-demand: ~$15-20/hour
-# 4x A100 spot: ~$5-8/hour
-# Training time for 7B model (3 epochs, 10k examples): ~10-20 hours
-# Total cost: $50-400 depending on hardware choice
+# Training time varies based on dataset size, sequence length, batch size, and hardware.
+# Use NTF's utilities to optimize for your specific setup.
 
 # Optimization tips:
 # 1. Use gradient accumulation instead of larger batches
@@ -916,12 +901,12 @@ Full fine-tuning provides maximum adaptation capability but requires significant
 ## Exercises
 
 ### Beginner
-1. Run full fine-tuning on a small model (1-3B parameters) with a tiny dataset (100 examples)
+1. Run full fine-tuning on a small model with a tiny dataset (100 examples)
 2. Monitor GPU memory usage throughout training
 3. Compare base model vs fine-tuned model on 5 test examples
 
 ### Intermediate
-1. Fine-tune a 7B model on 10k instruction examples using 4 GPUs
+1. Fine-tune a model on instruction examples using available GPUs
 2. Implement discriminative learning rates
 3. Evaluate perplexity before and after fine-tuning
 
@@ -929,7 +914,7 @@ Full fine-tuning provides maximum adaptation capability but requires significant
 1. Implement curriculum learning with difficulty-sorted data
 2. Experiment with layer-wise learning rate decay
 3. Fine-tune on multiple domains and measure catastrophic forgetting
-4. Optimize training to fit 7B model on a single 24GB GPU using DeepSpeed ZeRO-3 + CPU offload
+4. Optimize training to fit your model using DeepSpeed ZeRO-3 + CPU offload
 
 ---
 
