@@ -152,9 +152,23 @@ dpo.train(preference_dataset=human_prefs)
 
 ## 📚 Documentation
 
+### 🌐 Interactive Tutorials
+For a step-by-step learning experience, check out our **Interactive Documentation**:
+- **🔗 URL**: Open `Tutorials/index.html` in your browser or visit [Nexuss-Transformer.gt.tc](https://nexuss-ai.com)
+- **📖 Content**: 14 comprehensive modules from blank slate to production deployment
+- **✨ Features**: Search, filtering by difficulty, dark mode, and syntax highlighting
+
+```bash
+# Launch Local Tutorial Viewer
+python -m http.server 8000 --directory Tutorials/
+# Open: http://localhost:8000/index.html
+```
+
+### 📄 Technical Documentation
 | Module | Description |
 | :--- | :--- |
 | **[TRAINING.md](./TRAINING.md)** | **Comprehensive End-to-End Guide**. Covers installation, configuration, pre-training, fine-tuning, RLHF, and continual learning strategies. |
+| **[Tutorials/README.md](./Tutorials/README.md)** | **Tutorial Series Index**. Overview of all 14 incremental learning modules. |
 | `models/` | Core Transformer architecture, configurations, and tokenization utilities. |
 | `training/` | Distributed trainer, checkpoint manager, and data collators. |
 | `finetuning/` | Full fine-tuning, LoRA/PEFT wrappers, and layer freezing logic. |
