@@ -1,45 +1,46 @@
 # Nexuss Transformer Framework - Requirements
 # Core dependencies for production use
+# Modernized versions with proven compatibility (tested 2024)
 
 # Transformers & Training
-transformers>=4.37.0
-accelerate>=0.26.0
-peft>=0.8.0
-trl>=0.7.0
+transformers==4.44.0
+accelerate==0.33.0
+peft==0.12.0
+trl==0.9.6
 
 # Tokenization
 ethiobbpe>=1.0.0       # EthioBBPE - Advanced Ethiopian Language Tokenizer
-tokenizers>=0.15.0
-sentencepiece>=0.1.99
+tokenizers==0.19.1
+sentencepiece==0.2.0
 
-# Data Processing
-datasets>=2.14.0
-pyarrow>=14.0.0
+# Data Processing - Compatible versions to avoid PyExtensionType errors
+datasets==2.20.0
+pyarrow==16.1.0
 
 # Deep Learning
-torch>=2.1.0
-torchvision>=0.16.0
+torch==2.4.0
+torchvision==0.19.0
 
 # Optimization
-bitsandbytes>=0.42.0  # For QLoRA
+bitsandbytes==0.43.3  # For QLoRA
 
 # Evaluation
-nltk>=3.8.0
-rouge_score>=0.1.2
-sacrebleu>=2.3.0
+nltk==3.8.1
+rouge_score==0.1.2
+sacrebleu==2.4.2
 
 # Monitoring & Logging
 wandb>=0.16.0
-tensorboard>=2.15.0
+tensorboard==2.17.0
 
 # Configuration
-pyyaml>=6.0.0
-omegaconf>=2.3.0
+pyyaml==6.0.1
+omegaconf==2.3.0
 
 # Utilities
-tqdm>=4.66.0
-numpy>=1.24.0
-scipy>=1.11.0
+tqdm==4.66.4
+numpy==1.26.4
+scipy==1.14.0
 
 # Development (optional)
 pytest>=7.4.0
@@ -48,5 +49,5 @@ flake8>=6.0.0
 mypy>=1.0.0
 
 # Production
-safetensors>=0.4.0
-huggingface_hub>=0.20.0
+safetensors==0.4.3
+huggingface_hub==0.24.5
