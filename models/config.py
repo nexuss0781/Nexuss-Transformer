@@ -150,6 +150,7 @@ class NTFConfig:
     # Runtime options
     use_cache: bool = True
     gradient_checkpointing: bool = False
+    use_rmsnorm: bool = True
     
     # Quantization configuration
     quantization: Optional["QuantizationConfig"] = None

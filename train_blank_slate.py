@@ -780,17 +780,17 @@ def main(args):
         print(f"  • Parameter memory:      {param_memory_mb:.2f} MB (FP32 equivalent)")
         print(f"  • Vocabulary size:       {vocab_size:,}")
         print(f"  • Max sequence length:   {args.max_seq_len}")
-        print(f"  • Model depth:           {model_config.num_layers} layers")
-        print(f"  • Hidden dimension:      {model_config.dim_model}")
-        print(f"  • Attention heads:       {model_config.num_heads}")
-        print(f"  • FFN dimension:         {model_config.dim_ffn}")
+        print(f"  • Model depth:           {model_config.n_layers} layers")
+        print(f"  • Hidden dimension:      {model_config.d_model}")
+        print(f"  • Attention heads:       {model_config.n_heads}")
+        print(f"  • FFN dimension:         {model_config.d_ff}")
         
         # Architecture features
         features = []
         if model_config.use_rope: features.append("RoPE")
-        if model_config.use_swiglu: features.append("SwiGLU")
+        if model_config.activation == "swiglu": features.append("SwiGLU")
         if model_config.use_rmsnorm: features.append("RMSNorm")
-        if model_config.tie_embeddings: features.append("Tied Embeddings")
+        if model_config.tie_word_embeddings: features.append("Tied Embeddings")
         if args.gradient_checkpointing: features.append("Gradient Checkpointing")
         print(f"  • Architecture features: {', '.join(features)}")
         
@@ -839,10 +839,10 @@ def main(args):
                 "param_memory_mb": param_memory_mb,
                 "vocab_size": vocab_size,
                 "max_seq_length": args.max_seq_len,
-                "num_layers": model_config.num_layers,
-                "dim_model": model_config.dim_model,
-                "num_heads": model_config.num_heads,
-                "dim_ffn": model_config.dim_ffn,
+                "num_layers": model_config.n_layers,
+                "dim_model": model_config.d_model,
+                "num_heads": model_config.n_heads,
+                "dim_ffn": model_config.d_ff,
                 "architecture_features": features,
             },
             "computational_statistics": {
