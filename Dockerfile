@@ -2,7 +2,7 @@
 # Optimized for Hugging Face Spaces with GPU support
 # Modernized with stable CUDA 12.4 and compatible dependencies
 
-FROM nvidia/cuda:12.4.1-cudnn9-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.0-cudnn9-runtime-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
