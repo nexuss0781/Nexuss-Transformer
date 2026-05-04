@@ -54,7 +54,7 @@ RUN pip3 install --no-cache-dir \
     sacrebleu==2.4.2 \
     tensorboard==2.17.0 \
     bitsandbytes==0.43.3 \
-    ethiobbpe>=1.0.0
+    ethiobbpe>=1.0.1
 
 # Optional: Install Flash Attention 2 for Ampere+ GPUs (uncomment if using A100/H100/RTX30xx+)
 # RUN pip install flash-attn==2.6.3 --no-build-isolation
