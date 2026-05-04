@@ -16,7 +16,7 @@ setup(
         "trl>=1.3.0",
         "datasets>=2.0.0",
         "tokenizers>=0.21,<0.22",
-        "ethiobbpe>=1.0.0",
+        "ethiobbpe>=1.0.1",
         "wandb>=0.15.0",
         "optuna>=3.0.0",
         "scipy>=1.10.0",
